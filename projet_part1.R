@@ -1,6 +1,7 @@
 #setwd("C:/Users/Axelle/Desktop/M/03_SISE/05_MACHINE LEARNING/Projet")
+#setwd("C:/Users/ameli/Desktop/R/data_mining")
 
-#Lecture et description des données
+#Lecture et description des donnees
 #2
 D = read.table("breast-cancer-wisconsin.data", sep = ",", na.strings = "?")
 colnames(D) = c("code_number", "clump_thickness", "cell_size_uni", "cell_shape_uni", "marginal_adhesion", "single_epithetial_cell_size", "bare_nuclei", "bland_chromatin", "normal_nucleoli", "mitoses", "class")
@@ -8,38 +9,42 @@ colnames(D) = c("code_number", "clump_thickness", "cell_size_uni", "cell_shape_u
 #3
 class(D) #df
 str(D) #nbr obs/var et type de chaque var
-head(D) #les premières lignes
-summary(D) #résumé de chaque var
+head(D) #les premieres lignes
+summary(D) #resume de chaque var
 
-#Separation des donnees en “train” et “test”
+#Separation des donnees en 'train' et 'test'
 
-#4
+#4 
 na_row = complete.cases(D)[complete.cases(D)==FALSE]  
 length(na_row) #on a bien 16 lignes non completes
 
-#5
+#5 Garder les donnees complete
 D = D[complete.cases(D),]
 nrow(D) #on a bien 699-16 = 683 lignes
 
-#6
-X = D[, 2:10] #données explicatives
+#6 Cr�ation des variable X et Y :
+X = D[, 2:10] #donnees explicatives
 y = D$class #variable cible
 
-#7
+#7 Recodage de Y :
 library(dplyr)
+#Distribution de y
 length(y[y==2]) #444
 length(y[y==4]) #239
 y = recode(y, "2" = 0, "4" = 1)
+#V�rification de la distribution de y apr�s recodage :
 length(y[y==0]) #444 -> benin
 length(y[y==1]) #239 -> maligne
-#on a bien recodé
+#on a bien recode
 
-#8
+#8 D�coupage des variables benin et malin
 benin = which(y == 0, arr.ind = TRUE)
 #length(benin)
+malin = which(y == 1, arr.ind = TRUE)
+#length(malin)
 
-#9
-#train_set = benin[1:200]
+
+#9 Selection des 200 observations b�gnines
 Xtrain_set = X[benin[1:200],]
 Xtest_set = X[-benin[1:200],]
 ytrain_set = y[benin[1:200]]
