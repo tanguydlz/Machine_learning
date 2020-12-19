@@ -52,13 +52,13 @@ ytest_set = y[-benin[1:200]]
 
 
 #One-class SVM
-#10
+#10 Chargement de la library
 library(e1071)
 
-#11
+#11 Estimation du modele avec noyau gaussien et de type "one-classification"
 oc_svm_fit = svm(ytrain_set ~ ., data=Xtrain_set, type = "one-classification", gamma = 1/2)
 
-#12
+#12 Score des observations de test :
 oc_svm_pred_test = predict(oc_svm_fit, newdata = Xtest_set, decision.values = TRUE)
 oc_svm_pred_test
 
@@ -67,26 +67,30 @@ attr(oc_svm_pred_test, "decision.values") #les scores des observations
 oc_svm_score_test = -as.numeric(attr(oc_svm_pred_test ,"decision.values")) #on a changer le signe (pk?)
 
 #Courbe ROC
-#14
+#14 Chargement library
 library(ROCR)
 
-#15
+#15 
 pred_oc_svm = prediction(oc_svm_score_test, ytest_set)
 oc_svm_roc = performance(pred_oc_svm, measure = "tpr", x.measure = "fpr")
 plot(oc_svm_roc)
 
-#16
+#16 
 #TP = sensibilite
-#FP = 1-specificitÃ©
+#FP = 1-specificite
 #la courbe ROC est au dessus du classifieur aleatoire -> bonne classification
+#Le modéle est performant car le point le plus élevé est trés proche du point(0,1) 
+#qui est le point idéal
 
 oc_svm_auc <- performance(pred_oc_svm, "auc")
 oc_svm_auc@y.values[[1]]
-#0.99 --> tres bonne performance
+#L'air sour la courbe est de 0.99, ce qui est très proche de la meilleur
+#valeur qui est 1.
 
-#Kernel PCA
+#6 Kernel PCA
 library(kernlab)
 kernel = rbfdot(sigma = 1/8) #kernel generating function
+#echatillon d'entrainement :
 Ktrain = kernelMatrix(kernel, as.matrix(Xtrain_set))
 
 #18
@@ -94,7 +98,7 @@ Ktrain = kernelMatrix(kernel, as.matrix(Xtrain_set))
 k2 = apply(Ktrain, 1, sum)
 k3 = apply(Ktrain, 2, sum)
 k4 = sum (Ktrain)
-n = ncol(Ktrain) #n = nbr de ligne de Xtrain_set = nombre de donnÃ©es de l'ensemble d'apprentissage
+n = ncol(Ktrain) #n = nbr de ligne de Xtrain_set = nombre de donnees de l'ensemble d'apprentissage
 KtrainCent = matrix (0, ncol = n, nrow = n) 
 for(i in 1:n){
   for(j in 1:n){

@@ -1,7 +1,6 @@
-#Réseau de neurone à une couche caché ! 
 
-##chargement des données
-setwd("C:/Users/ameli/Desktop/R/data_mining")
+#chargement des donnees
+#setwd("C:/Users/ameli/Desktop/R/data_mining")
 
 data<-read.csv2("bank.csv")
 
