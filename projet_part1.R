@@ -108,18 +108,26 @@ for(i in 1:n){
 #k2 -> 1eme somme
 #k3 -> 2eme somme
 #k4 -> 3eme somme (la double somme)
+#Le calcule des k permet de calculer KtrainCent 
+# qui contient les coordonnées des objets sur ces axes des composantes principales
 
-#19
+#19 Décomposition spectrale : 
 eigen_KtrainCent = eigen(KtrainCent)
+#pas sur de ca : Pour obtenir une représentation des données dans un espace euclidien
 
 #20
 s = 80
+#S le nombre d'axes principaux gardé
 A = eigen_KtrainCent$vectors[, 1:s]%*%diag(1/sqrt(eigen_KtrainCent$values[1:s]))
+#On recupére le f pour les 80 première composantes principales
 
-#21
+#21 
 K = kernelMatrix(kernel, as.matrix(X))
+#K est la matrice à noyau K_{i,j}
 
-#22
+#22 calcule du carré de la distance euclidienne entre l'origine et le vecteur
+n=dim(K)[1]
 
-
+p2=(2/n)*Ktrain
+p3=(1/n^2)*K
 
