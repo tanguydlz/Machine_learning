@@ -115,19 +115,40 @@ for(i in 1:n){
 eigen_KtrainCent = eigen(KtrainCent)
 #pas sur de ca : Pour obtenir une représentation des données dans un espace euclidien
 
-#20
+#20 Calcul des coefiicients alpha
 s = 80
 #S le nombre d'axes principaux gardé
 A = eigen_KtrainCent$vectors[, 1:s]%*%diag(1/sqrt(eigen_KtrainCent$values[1:s]))
 #On recupére le f pour les 80 première composantes principales
 
-#21 
+#21 noyau sur l'échantillon total :
+#X est l'echantillon total
 K = kernelMatrix(kernel, as.matrix(X))
 #K est la matrice à noyau K_{i,j}
 
-#22 calcule du carré de la distance euclidienne entre l'origine et le vecteur
-n=dim(K)[1]
 
-p2=(2/n)*Ktrain
-p3=(1/n^2)*K
+# on travail sur echantillon total mais 23 faut travailler sur l'ech test..
+#Je sais pas ou est ce qu'on utilise ech test et l'ech total ..
+
+#22 calcule du carré de la distance euclidienne entre l'origine et le vecteur
+#KTrain d'en haut devient K :
+n=dim(K)[1]
+#p1 = k(z,z)
+
+#p2 = 2/n somme(K(z,xi))
+#même element que k3 donc :
+p2=(2/n)*apply(K, 2, sum)
+#p3 = 1/n² doublesomme(k(xi,xj))
+#même element que k4 donc :
+p3=(1/n^2)*sum(K)
+
+
+#23 à changer pour les données test : 
+ps=p1-p2+p3
+
+#24 Terme de (5) : 
+
+#Dans 5 je comprend pas la diff entre le terme 2 et le terme 4
+
+
 
