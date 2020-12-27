@@ -1,0 +1,204 @@
+---
+title: "Regression_Logistique"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Le modèle de régression logistique
+La régression logistique est un modèle prédictif dont le but est de prédire/expliquer les valeurs prises par une variable cible qualitative. 
+Dans notre cas, la variable cible y est de type binaire (yes/no) et désigne si le client à souscrit ou non un dépôt à terme. On parle donc de régression logistique binaire.  
+
+Il est possible de pénaliser le modèle de régression logistique. En effet, il y a deux types de régression pénalisée:  
+- la régression Ridge: pénalise la magnitude absolue des coefficients  
+- la régression Lasso: pénalise le nombre de coefficient différents de 0  
+Ces paramètres sont utilisés pour ajuster les coefficients de la régression à l'aide de plusieurs paramètres comme alpha qui permet d'ajuster le modèle Ridge ou Lasso et lambda qui permet de contrôler la pénalité.  
+
+Dans un premier temps, nous allons charger et préparer les données. Nous essaierons ensuite plusieurs modèles de régression logistique, notamment des modèles pénalisés. Enfin, nous comparrons les performances de nos modèles.
+
+# Chargement des packages
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(glmnet)
+library(caTools)
+```
+
+
+# Préparation des données
+```{r}
+set.seed(123)
+#Chargement des données
+data<-read.csv2("C:/Users/Axelle/Desktop/M/03_SISE/05_MACHINE LEARNING/Projet/bank.csv")
+
+#Recodage de la variable cible
+data$y = recode(data$y, "no" = 0, "yes" = 1)
+prop.table(table(data$y))
+```
+Nous avons recodé la variable cible en variable binaire 0/1 ou 0 désigne la classe "no" et 1 désigne la classe "yes".  
+88.47% de nos observations sont de la classe 0. Le modèle par défaut consisterait donc à prédire systématiquement la classe majoritaire 0.
+Donc, avec la prédiction par défaut, le taux d'erreur serait de 11.52%.
+
+# Echantillonage
+Nous séparons les données en un échantillon d'apprentissage et un échantillon de test puis nous séparons la variable cible et les variables explicatives dans des variables différentes.
+```{r}
+#Echantillonage des données
+ech = sort(sample(nrow(data), nrow(data)*.7))
+train = data[ech, ]
+test = data[-ech, ]
+
+#Definition variables explicatives/variable cible
+Xtrain = train[, -17]
+ytrain = train[, 17]
+Xtest = test[, -17]
+ytest = test[, 17]
+```
+
+# La régression logistique
+Nous essayons d'abord de prédire nos données avec un modèle de régression logistique sans pénalisation (avec lambda=0).
+```{r}
+#Modèle de régression logistique
+reg = glmnet(model.matrix(~., Xtrain), ytrain, family="binomial", lambda=0) 
+#Prédiction sur les données test
+pred = predict(reg, newx = model.matrix(~., Xtest), type="class", s=c(0))
+#Matrice de confusion
+cm = table(pred, ytest); cm
+#Taux d'erreur
+err = (cm[1,2] + cm[2,1])/sum(cm); err
+```
+Le taux d'erreur est de `r round(err*100,2)`% qui est donc meilleur que la prédiction par défaut.
+
+
+# La régression Ridge
+La régression ridge correspond à lambda>0 et alpha=0.  
+Nous allons déterminer la valeur optimal de lambda par cross validation en 10 folds.
+```{r}
+# Optimisation du paramètre lambda
+cv.ridge = cv.glmnet(model.matrix(~., Xtrain), ytrain, family="binomial", type.measure="class", nfolds=10, alpha=0, keep=TRUE)
+plot(cv.ridge)
+```
+  
+Le graphique met en relation les valeurs de log(λ) avec le taux d’erreur moyen en validation croisée.  
+Le premier trait en pointillé représente le lambda qui minimise l'erreur. Il vaut `r round(log(cv.ridge$lambda.min),2)`.  
+Le deuxième trait en pointillé représente la plus grande valeur de lambda pour laquelle l'erreur moyenne en validation croisée est inférieure à la borne haute de l’intervalle de confiance de l’erreur optimale. Il vaut `r round(log(cv.ridge$lambda.1se),2)`.  
+```{r}
+lambda_min = cv.ridge$lambda.min
+lambda_1se = cv.ridge$lambda.1se
+```
+
+Nous allons essayer de faire les prédictions avec ces deux valeurs de lambda.
+```{r}
+#Prédiction
+pred_ridge = predict(cv.ridge , newx = model.matrix(~., Xtest), s=c(lambda_min, lambda_1se), type="class")
+#Matrices de confusion
+cm_ridge1 = table(pred_ridge[,1], ytest)
+cm_ridge2 = table(pred_ridge[,2], ytest)
+#Taux d'erreur
+err_ridge1 = (cm_ridge1[1,2] + cm_ridge1[2,1])/sum(cm_ridge1); err_ridge1
+err_ridge2 = (cm_ridge2[1,2] + cm_ridge2[2,1])/sum(cm_ridge2); err_ridge2
+```
+Les deux modèles Ridge font mieux que la prédiction par défaut mais sont moins bien que le modele precedent (sans pénalisation).  
+Si on compare les deux modèles de Ridge, le premier est un peu meilleur. Le modèle le plus pénalisé n'est donc pas le meilleur choix dans notre cas.
+
+# La régression elasticnet
+La régression ridge correspond à lambda>0 et alpha>0.  
+Nous allons déterminer la valeur optimal de lambda et alpha.  
+Nous commençons par cross valider notre modèle.
+```{r}
+#Modèles
+for (i in 1:10) {
+  assign(paste("fit", i, sep=""), cv.glmnet(model.matrix(~., Xtrain), ytrain, type.measure="class", alpha=i/10,family="binomial"))
+}
+```
+  
+Prédiction avec les différents modèles
+```{r}
+#Predictions
+pred_enet1 = predict(fit1, s=c(fit1$lambda.1se, fit1$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet2 = predict(fit2, s=c(fit2$lambda.1se, fit2$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet3 = predict(fit3, s=c(fit3$lambda.1se, fit3$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet4 = predict(fit4, s=c(fit4$lambda.1se, fit4$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet5 = predict(fit5, s=c(fit5$lambda.1se, fit5$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet6 = predict(fit6, s=c(fit6$lambda.1se, fit6$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet7 = predict(fit7, s=c(fit7$lambda.1se, fit7$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet8 = predict(fit8, s=c(fit8$lambda.1se, fit8$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet9 = predict(fit9, s=c(fit9$lambda.1se, fit9$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet10 = predict(fit10, s=c(fit10$lambda.1se, fit10$lambda.min), newx=model.matrix(~., Xtest), type="class")
+```
+
+Calcul des matrices de confusion
+```{r}
+#Matrices de confusion
+cm_enet1_1se = table(pred_enet1[,1], ytest)
+cm_enet2_1se = table(pred_enet2[,1], ytest)
+cm_enet3_1se = table(pred_enet3[,1], ytest)
+cm_enet4_1se = table(pred_enet4[,1], ytest)
+cm_enet5_1se = table(pred_enet5[,1], ytest)
+cm_enet6_1se = table(pred_enet6[,1], ytest)
+cm_enet7_1se = table(pred_enet7[,1], ytest)
+cm_enet8_1se = table(pred_enet8[,1], ytest)
+cm_enet9_1se = table(pred_enet9[,1], ytest)
+cm_enet10_1se = table(pred_enet10[,1], ytest)
+
+cm_enet1_min = table(pred_enet1[,2], ytest)
+cm_enet2_min = table(pred_enet2[,2], ytest)
+cm_enet3_min = table(pred_enet3[,2], ytest)
+cm_enet4_min = table(pred_enet4[,2], ytest)
+cm_enet5_min = table(pred_enet5[,2], ytest)
+cm_enet6_min = table(pred_enet6[,2], ytest)
+cm_enet7_min = table(pred_enet7[,2], ytest)
+cm_enet8_min = table(pred_enet8[,2], ytest)
+cm_enet9_min = table(pred_enet9[,2], ytest)
+cm_enet10_min = table(pred_enet10[,2], ytest)
+```
+  
+Calcul des taux d'erreur
+```{r}
+#Taux d'erreur
+err_enet1_1se = (cm_enet1_1se[1,2] + cm_enet1_1se[2,1])/sum(cm_enet1_1se)
+err_enet2_1se = (cm_enet2_1se[1,2] + cm_enet2_1se[2,1])/sum(cm_enet2_1se)
+err_enet3_1se = (cm_enet3_1se[1,2] + cm_enet3_1se[2,1])/sum(cm_enet3_1se)
+err_enet4_1se = (cm_enet4_1se[1,2] + cm_enet4_1se[2,1])/sum(cm_enet4_1se)
+err_enet5_1se = (cm_enet5_1se[1,2] + cm_enet5_1se[2,1])/sum(cm_enet5_1se)
+err_enet6_1se = (cm_enet6_1se[1,2] + cm_enet6_1se[2,1])/sum(cm_enet6_1se)
+err_enet7_1se = (cm_enet7_1se[1,2] + cm_enet7_1se[2,1])/sum(cm_enet7_1se)
+err_enet8_1se = (cm_enet8_1se[1,2] + cm_enet8_1se[2,1])/sum(cm_enet8_1se)
+err_enet9_1se = (cm_enet9_1se[1,2] + cm_enet9_1se[2,1])/sum(cm_enet9_1se)
+err_enet10_1se = (cm_enet10_1se[1,2] + cm_enet10_1se[2,1])/sum(cm_enet10_1se)
+err_enet_1se = c(err_enet1_1se, err_enet2_1se, err_enet3_1se, err_enet4_1se, err_enet5_1se, err_enet6_1se, err_enet7_1se, err_enet8_1se, err_enet9_1se, err_enet10_1se)
+
+err_enet1_min = (cm_enet1_min[1,2] + cm_enet1_min[2,1])/sum(cm_enet1_min)
+err_enet2_min = (cm_enet2_min[1,2] + cm_enet2_min[2,1])/sum(cm_enet2_min)
+err_enet3_min = (cm_enet3_min[1,2] + cm_enet3_min[2,1])/sum(cm_enet3_min)
+err_enet4_min = (cm_enet4_min[1,2] + cm_enet4_min[2,1])/sum(cm_enet4_min)
+err_enet5_min = (cm_enet5_min[1,2] + cm_enet5_min[2,1])/sum(cm_enet5_min)
+err_enet6_min = (cm_enet6_min[1,2] + cm_enet6_min[2,1])/sum(cm_enet6_min)
+err_enet7_min = (cm_enet7_min[1,2] + cm_enet7_min[2,1])/sum(cm_enet7_min)
+err_enet8_min = (cm_enet8_min[1,2] + cm_enet8_min[2,1])/sum(cm_enet8_min)
+err_enet9_min = (cm_enet9_min[1,2] + cm_enet9_min[2,1])/sum(cm_enet9_min)
+err_enet10_min = (cm_enet10_min[1,2] + cm_enet10_min[2,1])/sum(cm_enet10_min)
+err_enet_min = c(err_enet1_min, err_enet2_min, err_enet3_min, err_enet4_min, err_enet5_min, err_enet6_min, err_enet7_min, err_enet8_min, err_enet9_min, err_enet10_min)
+```
+  
+Comparaion des taux d'erreur
+```{r}
+df_err_enet = data.frame(err_enet_1se,err_enet_min)
+df_err_enet
+```
+Nous remarquons que les modèles les plus pénalisés (ceux avec lambda.1se) ont un taux d'erreur plus elevé et sont donc moins bon.
+Le meilleur de nos modèles a un taux d'erreur de `r min(df_err_enet)`.
+
+Récupérons à présents nos 3 meilleurs modèles.
+Nous allons afficher la courbe ROC afin de comparer ces modèles.
+```{r}
+all_pred = data.frame(as.numeric(pred), as.numeric(pred_ridge[,2]), as.numeric(pred_enet8[,2]))
+colnames(all_pred) = c("reg_log", "reg_ridge", "reg_enet")
+colAUC(all_pred, ytest, plotROC = TRUE)
+abline(0,1, col = "blue")
+```
+  
+Nous remarquons que nos trois modèles font mieux que l'aléatoire. Le meilleur des trois modèles est le modèle non pénalisé suivi du modèle elasticnet puis du modèle Ridge.  
+Les aires sous la courbes sont compris entre `r round(min(colAUC(all_pred, ytest,)),2)` et `r round(max(colAUC(all_pred, ytest,)),2)`. Il ne s'agit donc pas d'exellents modèles.
+
+
