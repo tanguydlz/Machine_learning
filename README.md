@@ -1,13 +1,7 @@
 Projet Data Mining
 
-Premiere partie pour la réalisation d'un tp sur les "kernel PCA". Deuxième partie avec  la comparaison de trois analyses de données : Regression logistiques, Reseau de neuronne et SVM
+Premiere partie pour la rÃ©alisation d'un tp sur les "kernel PCA". DeuxiÃ¨me partie avec  la comparaison de trois analyses de donnÃ©es : Regression logistiques, Reseau de neuronne et SVM
 
-git pull 
-
-git commit
-git add *
-git commit -m "ameliepcrd"
-git push -u origin master
 
 
 
