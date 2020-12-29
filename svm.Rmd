@@ -35,15 +35,15 @@ ytest = test[, 17]
 # SVM
 Nous utilisons le package ’e1071’ pour l’implémentation des SVM. Nous demandons à la procédure svm() de construire un classifieur.
 ```{r}
-model <- svm(model.matrix(~., Xtrain), ytrain, scale=F, type = "C-classification")
+model <- svm(model.matrix(~., Xtrain), ytrain, scale=F, type= "C-classification")
 summary(model)
 ```
 
 ```{r}
 #Prédiction sur les données test
-pred = predict(model, newx = model.matrix(~., Xtest))
+pred = predict(model, newdata = model.matrix(~., Xtest))
 #Matrice de confusion
-cm = table(pred, as.factor(ytest)); cm
+cm = table(pred, ytest); cm
 #Taux d'erreur
 err = (cm[1,2] + cm[2,1])/sum(cm); err
 ```
