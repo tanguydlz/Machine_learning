@@ -22,7 +22,7 @@ length(na_row) #on a bien 16 lignes non completes
 D = D[complete.cases(D),]
 nrow(D) #on a bien 699-16 = 683 lignes
 
-#6 Création des variable X et Y :
+#6 Cr?ation des variable X et Y :
 X = D[, 2:10] #donnees explicatives
 y = D$class #variable cible
 
@@ -32,19 +32,19 @@ library(dplyr)
 length(y[y==2]) #444
 length(y[y==4]) #239
 y = recode(y, "2" = 0, "4" = 1)
-#Vérification de la distribution de y aprés recodage :
+#V?rification de la distribution de y apr?s recodage :
 length(y[y==0]) #444 -> benin
 length(y[y==1]) #239 -> maligne
 #on a bien recode
 
-#8 Découpage des variables benin et malin
+#8 D?coupage des variables benin et malin
 benin = which(y == 0, arr.ind = TRUE)
 #length(benin)
 malin = which(y == 1, arr.ind = TRUE)
 #length(malin)
 
 
-#9 Selection des 200 observations bégnines
+#9 Selection des 200 observations b?gnines
 Xtrain_set = X[benin[1:200],]
 Xtest_set = X[-benin[1:200],]
 ytrain_set = y[benin[1:200]]
@@ -79,12 +79,12 @@ plot(oc_svm_roc)
 #TP = sensibilite
 #FP = 1-specificite
 #la courbe ROC est au dessus du classifieur aleatoire -> bonne classification
-#Le modéle est performant car le point le plus élevé est trés proche du point(0,1) 
-#qui est le point idéal
+#Le mod?le est performant car le point le plus ?lev? est tr?s proche du point(0,1) 
+#qui est le point id?al
 
 oc_svm_auc <- performance(pred_oc_svm, "auc")
 oc_svm_auc@y.values[[1]]
-#L'air sour la courbe est de 0.99, ce qui est très proche de la meilleur
+#L'air sour la courbe est de 0.99, ce qui est tr?s proche de la meilleur
 #valeur qui est 1.
 
 #6 Kernel PCA
@@ -109,46 +109,79 @@ for(i in 1:n){
 #k3 -> 2eme somme
 #k4 -> 3eme somme (la double somme)
 #Le calcule des k permet de calculer KtrainCent 
-# qui contient les coordonnées des objets sur ces axes des composantes principales
+# qui contient les coordonn?es des objets sur ces axes des composantes principales
 
-#19 Décomposition spectrale : 
+#19 D?composition spectrale : 
 eigen_KtrainCent = eigen(KtrainCent)
-#pas sur de ca : Pour obtenir une représentation des données dans un espace euclidien
+#pas sur de ca : Pour obtenir une repr?sentation des donn?es dans un espace euclidien
 
 #20 Calcul des coefiicients alpha
 s = 80
-#S le nombre d'axes principaux gardé
+#S le nombre d'axes principaux gard?
 A = eigen_KtrainCent$vectors[, 1:s]%*%diag(1/sqrt(eigen_KtrainCent$values[1:s]))
-#On recupére le f pour les 80 première composantes principales
+#On recup?re le f pour les 80 premi?re composantes principales
 
-#21 noyau sur l'échantillon total :
+#21 noyau sur l'?chantillon total :
 #X est l'echantillon total
 K = kernelMatrix(kernel, as.matrix(X))
-#K est la matrice à noyau K_{i,j}
+#K est la matrice ? noyau K_{i,j}
 
 
 # on travail sur echantillon total mais 23 faut travailler sur l'ech test..
 #Je sais pas ou est ce qu'on utilise ech test et l'ech total ..
 
-#22 calcule du carré de la distance euclidienne entre l'origine et le vecteur
+#22 calcule du carr? de la distance euclidienne entre l'origine et le vecteur
 #KTrain d'en haut devient K :
 n=dim(K)[1]
 #p1 = k(z,z)
 
-#p2 = 2/n somme(K(z,xi))
-#même element que k3 donc :
-p2=(2/n)*apply(K, 2, sum)
-#p3 = 1/n² doublesomme(k(xi,xj))
-#même element que k4 donc :
-p3=(1/n^2)*sum(K)
+# #p2 = 2/n somme(K(z,xi))
+# #m?me element que k3 donc :
+# p2=(2/n)*apply(K, 2, sum)
+# #p3 = 1/n? doublesomme(k(xi,xj))
+# #m?me element que k4 donc :
+# p3=(1/n^2)*sum(K)
+p1 = K
+p2 = apply(K, 1, sum)
+p3=sum(Ktrain)
 
 
-#23 à changer pour les données test : 
-ps=p1-p2+p3
+
+#23 ? changer pour les donn?es test : 
+#ps=p1-p2+p3
+ps = matrix(0, ncol = n, nrow = n)
+for(i in 1:n){
+  for(j in 1:n){
+    ps[i, j] = p1[i,j] - (2/n)*p2[i] + (1/n^2)*p3
+  }
+}
 
 #24 Terme de (5) : 
+f1 = K
+f2 = apply(Ktrain, 1, sum)
+f3 = apply(K, 1, sum)
+f4 = sum(Ktrain)
 
-#Dans 5 je comprend pas la diff entre le terme 2 et le terme 4
+#25
+fl = matrix(0, ncol = s, nrow = nrow(Xtest_set))
+for(i in 1:nrow(Xtest_set)){
+  for(j in 1:s){
+    fl[i, j] = A[i] * (f1[i,j] - 1/n*f2[i] - 1/n*f3[i] + (1/n)^2 * f4)
+  }
+}
 
+#26
+kpca_score_test =  matrix(0, ncol = s, nrow = nrow(Xtest_set))
+for(i in 1:nrow(Xtest_set)){
+  for(j in 1:s){
+    kpca_score_test[i,j] = ps[i,j] - fl[i,j]^2
+  }
+}
+
+
+#27
+pred = prediction(kpca_score_test, ytest_set) #Erreur : 'predictions' contains NA.
+# roc = performance(pred, measure = "tpr", x.measure = "fpr")
+# plot(roc, add=TRUE)
 
 
