@@ -3,7 +3,6 @@
 library(csv)
 library(dplyr)
 library(e1071)
-library(caret)
 ```
 
 
@@ -20,6 +19,7 @@ prop.table(table(data$y))
 # Echantillonage
 Nous séparons les données en un échantillon d'apprentissage et un échantillon de test puis nous séparons la variable cible et les variables explicatives dans des variables différentes.
 ```{r}
+set.seed(123)
 #Echantillonage des données
 ech = sort(sample(nrow(data), nrow(data)*.7))
 train = data[ech, ]
@@ -33,11 +33,23 @@ ytest = test[, 17]
 ```
 
 # SVM
-Nous utilisons le package ’e1071’ pour l’implémentation des SVM. Nous demandons à la procédure svm() de construire un classifieur.
+Nous utilisons le package ’e1071’ pour l’implémentation des SVM. Nous demandons à la procédure svm() de construire un classifieur dont on ne centre pas les valeurs avec un noyau de type sigmoid.
+On applique cette fonction à nos données d'apprentissage
 ```{r}
-model <- svm(model.matrix(~., Xtrain), ytrain, scale=F, type= "C-classification")
+model <- svm(model.matrix(~., Xtrain), ytrain, scale=F, type= "C-classification",kernel='sigmoid')
 summary(model)
 ```
+
+On obtient 692 points supports ce qui est par rapport à la taille d'échantillon (3164 observations) n'est pas forcément trop élevé, donc la modélisation est efficace
+
+```{r}
+#numéro d’individu des points supports
+print((rownames(Xtrain))[model$index])
+```
+```{r}
+
+```
+
 
 ```{r}
 #Prédiction sur les données test
@@ -47,5 +59,88 @@ cm = table(pred, ytest); cm
 #Taux d'erreur
 err = (cm[1,2] + cm[2,1])/sum(cm); err
 ```
+Le taux d'erreur est de `r round(err*100,2)`% qui est donc moins bonne que la prédiction par défaut. (11.52%)
+
+Ce model n'ayant pas été tuné, il n'est que la version simple de ce que nous pouvons avoir.
+Maintenant, nous allons essayer d'ajuster notre modèle en tunant pour le moment deux hyperparamètres : C et Gamma.
+
+Pour rappel, l'hyperparamètre C est responsable de la taille de la marge du MVC. La marge  est une zone autour de l'hyperplan. Cela signifie que les points situés à l'intérieur de cette marge ne sont classés dans aucune des deux catégories.  Plus la valeur de C est faible, plus la marge est importante
+
+L'hyperparamètre gamma doit être réglé pour mieux adapter l'hyperplan aux données.  Il est responsable du degré de linéarité de l'hyperplan, et pour cela, il n'est pas présent lors de l'utilisation de noyaux linéaires. Plus γ est petit, plus l'hyperplan aura l'air d'une ligne droite, tandis que si γ est trop grand, l'hyperplan sera plus courbé et pourrait trop bien délimiter les données, ce qui entraînerait un overfitting.
+
+Traduit avec www.DeepL.com/Translator (version gratuite)
+
+#Optimisation des hyperparamètres
+```{r}
+#Optimisation de Gamma et C
+
+tuned = tune.svm(x=model.matrix(~., Xtrain),
+                 y=as.factor(ytrain), 
+                 scale=F, type = "C-classification", kernel='sigmoid',
+                 cost = 10^(-1:2), 
+                 gamma = c(0.1, 1, 10),
+                 tunecontrol=tune.control(cross=10))
+
+tuned$performances
+```
+
+Le tableau met en évidence les différentes valeurs de gamma et C testées avec le taux d'erreur moyen pour 10 validations.
+On constate donc que 3 modèles sortent du lot avec des taux d'erreur presque similaire au alentour de 16.9% :
+gamma : 0.1 & cost : 0.1
+gamma : 1.0 & cost : 0.1
+gamma : 10.0 & cost : 0.1
+
+```{r}
+plot(tuned)
+```
+
+Nous allons donc faire nos prédictions avec deux modèles, étant donné que nous avons le même taux d'erreur pour deux modèles, nous prendrons donc celui recommendé par l'algorithme.
 
 
+```{r}
+svmfit = tuned$best.model
+#Prédiction sur les données test
+pred = predict(svmfit, newdata = model.matrix(~., Xtest))
+#Matrice de confusion
+cm = table(pred, ytest); cm
+#Taux d'erreur
+err = (cm[1,2] + cm[2,1])/sum(cm); err
+```
+
+```{r}
+model2=svm(model.matrix(~., Xtrain), ytrain, scale=F,cost=0.1, gamma=0.1, type= "C-classification",kernel='sigmoid')
+#Prédiction sur les données test
+pred = predict(model2, newdata = model.matrix(~., Xtest))
+#Matrice de confusion
+cm = table(pred, ytest); cm
+#Taux d'erreur
+err = (cm[1,2] + cm[2,1])/sum(cm); err
+```
+On constate donc que nous avons le même taux d'erreur. Cependant, nous avons une moins bonne prédiction que celle par défaut (13.19% contre 11.52%)
+
+Cependant, nous avons essayé que peu de valeur pour nos hyperparamètres et avons obtenu de bons résultats, on va donc élargir notre champ de valeur possible pour C et Gamma, pour essayer d'obtenir de meilleur résultat tout en évitant de l'overfitting.
+
+#Optimisation des hyperparamètres
+```{r}
+#Optimisation de Gamma et C
+
+tuned2 = tune.svm(x=model.matrix(~., Xtrain),
+                 y=as.factor(ytrain), 
+                 scale=F, type = "C-classification", kernel='sigmoid',
+                 cost = 10^(-3:1), 
+                 gamma = 10^(-5:-1),
+                 tunecontrol=tune.control(cross=10))
+
+tuned2$performances
+```
+
+
+```{r}
+model2=svm(model.matrix(~., Xtrain), ytrain, scale=F,cost=0.1, gamma=10^-1, type= "C-classification",kernel='sigmoid')
+#Prédiction sur les données test
+pred = predict(model2, newdata = model.matrix(~., Xtest))
+#Matrice de confusion
+cm = table(pred, ytest); cm
+#Taux d'erreur
+err = (cm[1,2] + cm[2,1])/sum(cm); err
+```
