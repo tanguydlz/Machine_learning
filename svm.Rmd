@@ -68,7 +68,6 @@ Pour rappel, l'hyperparamètre C est responsable de la taille de la marge du MVC
 
 L'hyperparamètre gamma doit être réglé pour mieux adapter l'hyperplan aux données.  Il est responsable du degré de linéarité de l'hyperplan, et pour cela, il n'est pas présent lors de l'utilisation de noyaux linéaires. Plus γ est petit, plus l'hyperplan aura l'air d'une ligne droite, tandis que si γ est trop grand, l'hyperplan sera plus courbé et pourrait trop bien délimiter les données, ce qui entraînerait un overfitting.
 
-Traduit avec www.DeepL.com/Translator (version gratuite)
 
 #Optimisation des hyperparamètres
 ```{r}
