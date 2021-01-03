@@ -3,6 +3,7 @@
 library(csv)
 library(dplyr)
 library(e1071)
+library(caTools)
 ```
 
 
@@ -42,14 +43,6 @@ summary(model)
 
 On obtient 692 points supports ce qui est par rapport à la taille d'échantillon (3164 observations) n'est pas forcément trop élevé, donc la modélisation est efficace
 
-```{r}
-#numéro d’individu des points supports
-print((rownames(Xtrain))[model$index])
-```
-```{r}
-
-```
-
 
 ```{r}
 #Prédiction sur les données test
@@ -84,7 +77,7 @@ tuned$performances
 ```
 
 Le tableau met en évidence les différentes valeurs de gamma et C testées avec le taux d'erreur moyen pour 10 validations.
-On constate donc que 3 modèles sortent du lot avec des taux d'erreur presque similaire au alentour de 16.9% :
+On constate donc que 3 modèles sortent du lot avec des taux d'erreur presque similaire au alentour de 12.8% :
 gamma : 0.1 & cost : 0.1
 gamma : 1.0 & cost : 0.1
 gamma : 10.0 & cost : 0.1
@@ -99,9 +92,9 @@ Nous allons donc faire nos prédictions avec deux modèles, étant donné que no
 ```{r}
 svmfit = tuned$best.model
 #Prédiction sur les données test
-pred = predict(svmfit, newdata = model.matrix(~., Xtest))
+pred2 = predict(svmfit, newdata = model.matrix(~., Xtest))
 #Matrice de confusion
-cm = table(pred, ytest); cm
+cm = table(pred2, ytest); cm
 #Taux d'erreur
 err = (cm[1,2] + cm[2,1])/sum(cm); err
 ```
@@ -109,9 +102,9 @@ err = (cm[1,2] + cm[2,1])/sum(cm); err
 ```{r}
 model2=svm(model.matrix(~., Xtrain), ytrain, scale=F,cost=0.1, gamma=0.1, type= "C-classification",kernel='sigmoid')
 #Prédiction sur les données test
-pred = predict(model2, newdata = model.matrix(~., Xtest))
+pred3 = predict(model2, newdata = model.matrix(~., Xtest))
 #Matrice de confusion
-cm = table(pred, ytest); cm
+cm = table(pred3, ytest); cm
 #Taux d'erreur
 err = (cm[1,2] + cm[2,1])/sum(cm); err
 ```
@@ -126,20 +119,32 @@ Cependant, nous avons essayé que peu de valeur pour nos hyperparamètres et avo
 tuned2 = tune.svm(x=model.matrix(~., Xtrain),
                  y=as.factor(ytrain), 
                  scale=F, type = "C-classification", kernel='sigmoid',
-                 cost = 10^(-3:1), 
+                 cost = 10^(-1:3), 
                  gamma = 10^(-5:-1),
                  tunecontrol=tune.control(cross=10))
 
 tuned2$performances
 ```
 
+On a augmenté le champ de valeur possible pour C et diminué celui de gamma, car c'est ce qui correspond le mieux pour avoir le meilleur modèle possible. Au vu des différents taux d'erreur, nous n'avons pas de meilleurs résultats comparé à la précédente cross validation. On pourrait donc supposer que notre meilleur modèle pour ce jeu de données seraient avec C = 0.1 et gamma = 0.1
+
+
+Nous allons maintenant afficher la courbe ROC de nos deux modèles à comparer
 
 ```{r}
-model2=svm(model.matrix(~., Xtrain), ytrain, scale=F,cost=0.1, gamma=10^-1, type= "C-classification",kernel='sigmoid')
-#Prédiction sur les données test
-pred = predict(model2, newdata = model.matrix(~., Xtest))
-#Matrice de confusion
-cm = table(pred, ytest); cm
-#Taux d'erreur
-err = (cm[1,2] + cm[2,1])/sum(cm); err
+pred=as.numeric(pred)
+pred=recode(pred, '1'=0, '2'=1)
+pred2=as.numeric(pred2)
+pred2=recode(pred2, '1'=0, '2'=1)
 ```
+
+```{r}
+all_pred = data.frame(pred, pred2)
+colnames(all_pred) = c("svm_W/O_cv", "svm_w/_cv")
+colAUC(all_pred, ytest, plotROC = TRUE)
+abline(0,1, col = "blue")
+```
+On remarque que parmi nos 2 modèles, un fait mieux que celui aléatoire et l'autre le surpasse très légèrement
+Les aires sous la courbes sont compris entre `r round(min(colAUC(all_pred, ytest,)),2)` et `r round(max(colAUC(all_pred, ytest,)),2)`.
+Ces deux modèles ne sont donc pas performant.
+
