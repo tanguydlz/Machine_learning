@@ -57,7 +57,7 @@ Le taux d'erreur est de `r round(err*100,2)`% qui est donc moins bonne que la pr
 Ce model n'ayant pas été tuné, il n'est que la version simple de ce que nous pouvons avoir.
 Maintenant, nous allons essayer d'ajuster notre modèle en tunant pour le moment deux hyperparamètres : C et Gamma.
 
-Pour rappel, l'hyperparamètre C est responsable de la taille de la marge du MVC. La marge  est une zone autour de l'hyperplan. Cela signifie que les points situés à l'intérieur de cette marge ne sont classés dans aucune des deux catégories.  Plus la valeur de C est faible, plus la marge est importante
+Pour rappel, l'hyperparamètre C est responsable de la taille de la marge du MVC. Cela signifie que les points situés à l'intérieur de cette marge ne sont classés dans aucune des deux catégories.  Plus la valeur de C est faible, plus la marge est importante
 
 L'hyperparamètre gamma doit être réglé pour mieux adapter l'hyperplan aux données.  Il est responsable du degré de linéarité de l'hyperplan, et pour cela, il n'est pas présent lors de l'utilisation de noyaux linéaires. Plus γ est petit, plus l'hyperplan aura l'air d'une ligne droite, tandis que si γ est trop grand, l'hyperplan sera plus courbé et pourrait trop bien délimiter les données, ce qui entraînerait un overfitting.
 
