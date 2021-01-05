@@ -1,0 +1,16 @@
+---
+title: "Data_mining"
+author: "Axelle Barou & Amélie Picard & Tanguy Delzant"
+date: "06/01/2021"
+output: pdf_document
+---
+
+#Présentation de la problématique et du jeu de données
+
+Nous avons choisi un jeu de données sur Kaggle : https://www.kaggle.com/volodymyrgavrysh/bank-marketing-campaigns-dataset
+
+Ce dernier contient 41188 observations et 21 variables.
+
+Il s’agit d’un jeu de données sur les campagnes marketing des banques portugaises. Ces campagnes, qui se basaient sur des appels téléphoniques, permettaient d’offrir aux clients de déposer un dépôt à terme, c’est-à-dire de prêter de l’argent à une banque sur une durée fixe, avec un taux d’intérêt connu à l’avance ou variable.
+
+Notre problématique sera donc d’essayer de prédire, en fonction des données du client, des données récoltées au cours de l’entretien téléphonique de la campagne et d’autres attributs sociaux et économiques si ces clients seront enclins à souscrire un dépôt à terme.
