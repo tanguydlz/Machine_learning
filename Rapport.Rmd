@@ -1,13 +1,20 @@
 ---
-title: "Data_mining"
+title: "Projet Data_mining"
 author: "Axelle Barou & Amélie Picard & Tanguy Delzant"
 date: "06/01/2021"
 output: pdf_document
 ---
 
-Rapport 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-#Présentation de la problématique et du jeu de données
+#Introduction
+
+blabla
+Nous allons tout d'abord chercher le meilleur modèle de régression logistique, puis le meileur modèle possible de reseau de neuronnes et enfin le meilleur modèle de SVM (Support Vecotr Machine).
+
+# Présentation de la problématique et du jeu de données
 
 Nous avons choisi un jeu de données sur Kaggle : https://www.kaggle.com/volodymyrgavrysh/bank-marketing-campaigns-dataset
 
@@ -18,33 +25,202 @@ Il s’agit d’un jeu de données sur les campagnes marketing des banques portu
 Notre problématique sera donc d’essayer de prédire, en fonction des données du client, des données récoltées au cours de l’entretien téléphonique de la campagne et d’autres attributs sociaux et économiques si ces clients seront enclins à souscrire un dépôt à terme.
 
 
-```{r}
-#chargement des donnees
-#setwd("C:/Users/ameli/Desktop/R/data_mining")
+Voici les première lignes de notre base de données : 
 
-#le package neutralnet permet de réaliser des reseau de neurones :
-library(neuralnet) 
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(knitr)
+library(csv)
+library(e1071)
 library(dplyr)
 library(glmnet)
 library(caTools)
+#le package neutralnet permet de réaliser des reseau de neurones :
+library(neuralnet) 
 
+#chargement des donnees
+#setwd("C:/Users/ameli/Desktop/R/data_mining")
 data<-read.csv2("bank.csv")
 
 #Transformation de y en variable bianire : 
 data$y = recode(data$y, "no" = 0, "yes" = 1)
+#affichage du debut du jeu de données
+data1<-data[,c(1:8)]
+data2<-data[,c(8:17)]
+kable(head(data1),format = "latex")
+kable(head(data2),format = "latex")
 
 ```
 
+# Le modèle de régression logistique
 
-#Réalisation du réseau de neurones
+La régression logistique est un modèle prédictif dont le but est de prédire/expliquer les valeurs prises par une variable cible qualitative. 
+Dans notre cas, la variable cible y est de type binaire (yes/no) et désigne si le client à souscrit ou non un dépôt à terme. On parle donc de régression logistique binaire.  
+
+Il est possible de pénaliser le modèle de régression logistique. En effet, il y a deux types de régression pénalisée:  
+- la régression Ridge: pénalise la magnitude absolue des coefficients  
+- la régression Lasso: pénalise le nombre de coefficient différents de 0  
+Ces paramètres sont utilisés pour ajuster les coefficients de la régression à l'aide de plusieurs paramètres comme alpha qui permet d'ajuster le modèle Ridge ou Lasso et lambda qui permet de contrôler la pénalité.  
+
+Dans un premier temps, nous allons charger et préparer les données. Nous essaierons ensuite plusieurs modèles de régression logistique, notamment des modèles pénalisés. Enfin, nous comparrons les performances de nos modèles.
+
+## La régression logistique
+Nous essayons d'abord de prédire nos données avec un modèle de régression logistique sans pénalisation (avec lambda=0).
+```{r}
+#Modèle de régression logistique
+reg = glmnet(model.matrix(~., Xtrain), ytrain, family="binomial", lambda=0) 
+#Prédiction sur les données test
+predLog = predict(reg, newx = model.matrix(~., Xtest), type="class", s=c(0))
+#Matrice de confusion
+cm = table(predLog, ytest); cm
+#Taux d'erreur
+err = (cm[1,2] + cm[2,1])/sum(cm); err
+```
+Le taux d'erreur est de `r round(err*100,2)`% qui est donc meilleur que la prédiction par défaut.
+
+
+## La régression Ridge
+La régression ridge correspond à lambda>0 et alpha=0.  
+Nous allons déterminer la valeur optimal de lambda par cross validation en 10 folds.
+```{r}
+# Optimisation du paramètre lambda
+cv.ridge = cv.glmnet(model.matrix(~., Xtrain), ytrain, family="binomial", type.measure="class", nfolds=10, alpha=0, keep=TRUE)
+plot(cv.ridge)
+```
+
+Le graphique met en relation les valeurs de log(lambda) avec le taux d’erreur moyen en validation croisée.  
+Le premier trait en pointillé représente le lambda qui minimise l'erreur. Il vaut `r round(log(cv.ridge$lambda.min),2)`.  
+Le deuxième trait en pointillé représente la plus grande valeur de lambda pour laquelle l'erreur moyenne en validation croisée est inférieure à la borne haute de l’intervalle de confiance de l’erreur optimale. Il vaut `r round(log(cv.ridge$lambda.1se),2)`.  
+
+```{r}
+lambda_min = cv.ridge$lambda.min
+lambda_1se = cv.ridge$lambda.1se
+```
+
+
+Nous allons essayer de faire les prédictions avec ces deux valeurs de lambda.
+```{r}
+#Prédiction
+pred_ridge = predict(cv.ridge , newx = model.matrix(~., Xtest), s=c(lambda_min, lambda_1se), type="class")
+#Matrices de confusion
+cm_ridge1 = table(pred_ridge[,1], ytest)
+cm_ridge2 = table(pred_ridge[,2], ytest)
+#Taux d'erreur
+err_ridge1 = (cm_ridge1[1,2] + cm_ridge1[2,1])/sum(cm_ridge1); err_ridge1
+err_ridge2 = (cm_ridge2[1,2] + cm_ridge2[2,1])/sum(cm_ridge2); err_ridge2
+```
+Les deux modèles Ridge font mieux que la prédiction par défaut mais sont moins bien que le modele precedent (sans pénalisation).  
+Si on compare les deux modèles de Ridge, le premier est un peu meilleur. Le modèle le plus pénalisé n'est donc pas le meilleur choix dans notre cas.
+
+## La régression elasticnet
+La régression ridge correspond à lambda>0 et alpha>0.  
+Nous allons déterminer la valeur optimal de lambda et alpha.  
+Nous commençons par cross valider notre modèle.
+```{r}
+#Modèles
+for (i in 1:10) {
+  assign(paste("fit", i, sep=""), cv.glmnet(model.matrix(~., Xtrain), ytrain, type.measure="class", alpha=i/10,family="binomial"))
+}
+```
+  
+Prédiction avec les différents modèles
+```{r}
+#Predictions
+pred_enet1 = predict(fit1, s=c(fit1$lambda.1se, fit1$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet2 = predict(fit2, s=c(fit2$lambda.1se, fit2$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet3 = predict(fit3, s=c(fit3$lambda.1se, fit3$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet4 = predict(fit4, s=c(fit4$lambda.1se, fit4$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet5 = predict(fit5, s=c(fit5$lambda.1se, fit5$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet6 = predict(fit6, s=c(fit6$lambda.1se, fit6$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet7 = predict(fit7, s=c(fit7$lambda.1se, fit7$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet8 = predict(fit8, s=c(fit8$lambda.1se, fit8$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet9 = predict(fit9, s=c(fit9$lambda.1se, fit9$lambda.min), newx=model.matrix(~., Xtest), type="class")
+pred_enet10 = predict(fit10, s=c(fit10$lambda.1se, fit10$lambda.min), newx=model.matrix(~., Xtest), type="class")
+```
+
+Calcul des matrices de confusion
+```{r}
+#Matrices de confusion
+cm_enet1_1se = table(pred_enet1[,1], ytest)
+cm_enet2_1se = table(pred_enet2[,1], ytest)
+cm_enet3_1se = table(pred_enet3[,1], ytest)
+cm_enet4_1se = table(pred_enet4[,1], ytest)
+cm_enet5_1se = table(pred_enet5[,1], ytest)
+cm_enet6_1se = table(pred_enet6[,1], ytest)
+cm_enet7_1se = table(pred_enet7[,1], ytest)
+cm_enet8_1se = table(pred_enet8[,1], ytest)
+cm_enet9_1se = table(pred_enet9[,1], ytest)
+cm_enet10_1se = table(pred_enet10[,1], ytest)
+
+cm_enet1_min = table(pred_enet1[,2], ytest)
+cm_enet2_min = table(pred_enet2[,2], ytest)
+cm_enet3_min = table(pred_enet3[,2], ytest)
+cm_enet4_min = table(pred_enet4[,2], ytest)
+cm_enet5_min = table(pred_enet5[,2], ytest)
+cm_enet6_min = table(pred_enet6[,2], ytest)
+cm_enet7_min = table(pred_enet7[,2], ytest)
+cm_enet8_min = table(pred_enet8[,2], ytest)
+cm_enet9_min = table(pred_enet9[,2], ytest)
+cm_enet10_min = table(pred_enet10[,2], ytest)
+```
+  
+Calcul des taux d'erreur
+```{r}
+#Taux d'erreur
+err_enet1_1se = (cm_enet1_1se[1,2] + cm_enet1_1se[2,1])/sum(cm_enet1_1se)
+err_enet2_1se = (cm_enet2_1se[1,2] + cm_enet2_1se[2,1])/sum(cm_enet2_1se)
+err_enet3_1se = (cm_enet3_1se[1,2] + cm_enet3_1se[2,1])/sum(cm_enet3_1se)
+err_enet4_1se = (cm_enet4_1se[1,2] + cm_enet4_1se[2,1])/sum(cm_enet4_1se)
+err_enet5_1se = (cm_enet5_1se[1,2] + cm_enet5_1se[2,1])/sum(cm_enet5_1se)
+err_enet6_1se = (cm_enet6_1se[1,2] + cm_enet6_1se[2,1])/sum(cm_enet6_1se)
+err_enet7_1se = (cm_enet7_1se[1,2] + cm_enet7_1se[2,1])/sum(cm_enet7_1se)
+err_enet8_1se = (cm_enet8_1se[1,2] + cm_enet8_1se[2,1])/sum(cm_enet8_1se)
+err_enet9_1se = (cm_enet9_1se[1,2] + cm_enet9_1se[2,1])/sum(cm_enet9_1se)
+err_enet10_1se = (cm_enet10_1se[1,2] + cm_enet10_1se[2,1])/sum(cm_enet10_1se)
+err_enet_1se = c(err_enet1_1se, err_enet2_1se, err_enet3_1se, err_enet4_1se, err_enet5_1se, err_enet6_1se, err_enet7_1se, err_enet8_1se, err_enet9_1se, err_enet10_1se)
+
+err_enet1_min = (cm_enet1_min[1,2] + cm_enet1_min[2,1])/sum(cm_enet1_min)
+err_enet2_min = (cm_enet2_min[1,2] + cm_enet2_min[2,1])/sum(cm_enet2_min)
+err_enet3_min = (cm_enet3_min[1,2] + cm_enet3_min[2,1])/sum(cm_enet3_min)
+err_enet4_min = (cm_enet4_min[1,2] + cm_enet4_min[2,1])/sum(cm_enet4_min)
+err_enet5_min = (cm_enet5_min[1,2] + cm_enet5_min[2,1])/sum(cm_enet5_min)
+err_enet6_min = (cm_enet6_min[1,2] + cm_enet6_min[2,1])/sum(cm_enet6_min)
+err_enet7_min = (cm_enet7_min[1,2] + cm_enet7_min[2,1])/sum(cm_enet7_min)
+err_enet8_min = (cm_enet8_min[1,2] + cm_enet8_min[2,1])/sum(cm_enet8_min)
+err_enet9_min = (cm_enet9_min[1,2] + cm_enet9_min[2,1])/sum(cm_enet9_min)
+err_enet10_min = (cm_enet10_min[1,2] + cm_enet10_min[2,1])/sum(cm_enet10_min)
+err_enet_min = c(err_enet1_min, err_enet2_min, err_enet3_min, err_enet4_min, err_enet5_min, err_enet6_min, err_enet7_min, err_enet8_min, err_enet9_min, err_enet10_min)
+```
+  
+Comparaion des taux d'erreur
+```{r}
+df_err_enet = data.frame(err_enet_1se,err_enet_min)
+df_err_enet
+```
+Nous remarquons que les modèles les plus pénalisés (ceux avec lambda.1se) ont un taux d'erreur plus elevé et sont donc moins bon.
+Le meilleur de nos modèles a un taux d'erreur de `r min(df_err_enet)`.
+
+Récupérons à présents nos 3 meilleurs modèles.
+Nous allons afficher la courbe ROC afin de comparer ces modèles.
+```{r}
+all_pred = data.frame(as.numeric(predLog), as.numeric(pred_ridge[,2]), as.numeric(pred_enet8[,2]))
+colnames(all_pred) = c("reg_log", "reg_ridge", "reg_enet")
+colAUC(all_pred, ytest, plotROC = TRUE)
+abline(0,1, col = "blue")
+
+```
+  
+Nous remarquons que nos trois modèles font mieux que l'aléatoire. Le meilleur des trois modèles est le modèle non pénalisé suivi du modèle elasticnet puis du modèle Ridge.  
+Les aires sous la courbes sont compris entre `r round(min(colAUC(all_pred, ytest,)),2)` et `r round(max(colAUC(all_pred, ytest,)),2)`. Il ne s'agit donc pas d'exellents modèles.
+
+# Réalisation du réseau de neurones
 
 Nous allons voir le protocole expérimentale, puis nous allons le décrire plus en détail le déroulement de l'analyse réalisé ainsi que les conclusions.
 
-##Protocole expérimental
+## Protocole expérimental
 
 
 
-##Transformation des données
+## Transformation des données
 
 Avant de réaliser les réseaux de neurones, nous devons transformer les données. Pour les variables quantitatives, nous allons les normaliser pour qu'elle ai la même importance. Pour les variables qualitatives il faut les convertir en ordonné en leur donnant une valeur numeric de 1 à k ou k est le nombre de facteur. 
 Avant de paramètrer le réseau de neuronne, il faut normaliser les données, les variables explicatives, dans notre cas toutes les variables du jeu de données sauf "y" la variables cible.
@@ -106,7 +282,7 @@ yvalid = valid[, 17]
 ```
 
 
-##Paramétrage du réseau de neurone
+## Paramétrage du réseau de neurone
 
 Nous allons réaliser un réseau de neurones à l'aide de la fonction "neutralnet" qui permet de réaliser tout type de réseau de neurones.
 Nous allons paramétrer cette méthode grâce à de nombreux paramètres : 
@@ -149,7 +325,7 @@ tx<-(m[1,2]+m[2,1])/length(yvalid)
 tx
 ```
 
-Le taux d'erreur de ce premier modéle est de 8,5%.
+Le taux d'erreur de ce premier modéle est de `r round(tx*100,2)`%.
 
 Deuxième modèle : 
 ```{r}
@@ -163,22 +339,22 @@ tx2<-(m2[1,2]+m2[2,1])/length(yvalid)
 tx2
 
 ```
-Le modéle deux est plus performant avec le "likelihood" (taux d'erreur = 8,1% < 8,5%).
+Le modéle deux est moins performant avec le "likelihood" (taux d'erreur = `r round(tx*100,2)`% > `r round(tx2*100,2)`%).
 
 Troixième modèle : augmentation du nombre de couche de la couche caché de 10 à 17 (nombre de variable d'entrée)
 ```{r}
-#nn3=neuralnet(ytrain~., data = Xtrain, hidden=17, err.fct="ce",linear.output = FALSE)
+nn3=neuralnet(ytrain~., data = Xtrain, hidden=17, err.fct="ce",linear.output = FALSE)
 
-#prob3 <- predict(nn3,valid)
-#pred3 <- ifelse(prob3>0.5, 1, 0)
+prob3 <- predict(nn3,valid)
+pred3 <- ifelse(prob3>0.5, 1, 0)
 
-#m3<-table(pred3,yvalid)
-#tx3<-(m3[1,2]+m3[2,1])/length(yvalid)
-#tx3
+m3<-table(pred3,yvalid)
+tx3<-(m3[1,2]+m3[2,1])/length(yvalid)
+tx3
 
 ```
 
-Taux d'erreur un peu meilleur (7,9%<8,1%)
+Le taux d'erreur est plus faible que pour une couche comprenant 10 neurones cachés (`r round(tx3*100,2)`%)
 
 Quatrième modèle : augmentation du nombre de couche de la couche caché de 17 à 34 (deux fois le nombre de variable d'entrée)
 ```{r}
@@ -193,7 +369,7 @@ tx4
 
 ```
 
-Taux d'erreur un peu élevé, donc moins intéressant (7,6%<7,9%)
+Taux d'erreur un peu élevé, donc moins intéressant (`r round(tx4*100,2)`%)
 
 On garde la prédiction n°3 pour le nombre de neurones de la couche caché. Et nous décidons de garder 17 neurones dans la couche caché.
 
@@ -210,7 +386,7 @@ tx5
 
 ```
 
-Cette fois ci le taux d'erreur est plus élevé (8,0%)
+Cette fois ci le taux d'erreur est plus élevé (`r round(tx5*100,2)`%)
 
 Nous testons un dernier modéle.
 
@@ -223,10 +399,9 @@ pred6 <- ifelse(prob6>0.5, 1, 0)
 
 m6<-table(pred6,yvalid)
 tx6<-(m6[1,2]+m[2,1])/length(yvalid)
-tx6
 
 ```
-Cette fois le taux d'erreur est de 7,8% ce qui est faiblement plus élevé que pour le quatrième modèle (7,6%). Mais ce modèle utilise un plus grand nombre de neurone ce qui peut engendrer du sur-apprentissage. 
+Cette fois le taux d'erreur est de `r round(tx6*100,2)`% ce qui est faiblement plus élevé que pour le quatrième modèle (`r round(tx4*100,2)`%). Mais ce modèle utilise un plus grand nombre de neurone ce qui peut engendrer du sur-apprentissage. 
 
 Avec la library "neutralnn" et la variable cible y correspondant à une classification binaire, il n'est pas possible de paramétrer le réseau de neurone à l'infinie. Les paramétrages pour une telle variable sont faible. Le paramètre "algorithme" ne fonctionne qu'avec "rprop +", la fonction d'erreur ne peut pas être modifier et la demande d'une régression logistique est impossible. Nous aurions pu changer les poids les variables d'entrée, mais le choix de l'aléatoire nous pariassait plus juste.
 Néanmoins, avec les réseaux de neurones que nous avons construit nous avons un taux d'erreur plutôt faible, ce qui nous paraissait être un bon résultat.Pour confirmer cette avis, nous décidons de comparer les courbes ROC des six modèles.
@@ -242,7 +417,7 @@ abline(0,1, col = "blue")
 
 A l'aide de la Courbe ROC ainsi que du taux d'erreur, nous considérons le meilleur réseau de neurone étant le quatrième modèle construit. C'est a dire que nous utilisons 17 neuronnes caché et que nous plaçons à vrai l'argument "likelihood". C'est avec ce modèle que nous allons vérifier la bonne prédiction des valeurs test.
 
-##Prédiction de la variable cible y
+## Prédiction de la variable cible y
 
 Représentation graphique du réseau de neurones séléctionné : 
 
@@ -255,29 +430,31 @@ Voici la distribution de la variable y prédite par le réseau de neurone :
 
 ```{r}
 prob <- predict(nn4,test)
-pred <- ifelse(prob>0.5, 1, 0)
-pred
+predRN <- ifelse(prob>0.5, 1, 0)
 
 ```
 
 Voici la matrice de confusion entre les valeurs prédite et les valeurs test : 
 ```{r}
-m<-table(pred,ytest)
-m
+mRN<-table(predRN,ytest)
+kable(mRN)
 ```
 
-Voici le taux d'erreur de cette prédiction :
+#Comparaison des 3 modèles séléctionnée
+
+Nous allons maintenant comparer les trois modèles séléctionné pour chaque méthodes. Puis nous choisirons le plus efficasse de tous.
+
 ```{r}
-#tx d'erreur :
-tx<-(m[1,2]+m[2,1])/length(ytest)
-tx
+#tx d'erreur reseau de neurone:
+txRN<-(mRN[1,2]+mRN[2,1])/length(ytest)
 ```
-Le taux d'erreur est de 7,1%.
+Le taux d'erreur du modèle de la regression logistique est de `r round(txLog*100,2)`%, celui du réseau de neurones est `r round(txRN*100,2)`% et enfin celui du SVM est 
 
 courbe ROC représentant : 
 ```{r}
-colnames(pred)="Reseau de neurone"
-colAUC(pred, ytest, plotROC = TRUE)
+all_pred<-data.frame(predLog, predRN)
+colnames(all_pred)=c("Régression logistique","Reseau de neurones")
+colAUC(all_pred, ytest, plotROC = TRUE)
 abline(0,1, col = "blue")
 
 ```

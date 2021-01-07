@@ -1,0 +1,454 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Regression\_Logistique},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{Regression\_Logistique}
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+\maketitle
+
+\hypertarget{le-moduxe8le-de-ruxe9gression-logistique}{%
+\section{Le modèle de régression
+logistique}\label{le-moduxe8le-de-ruxe9gression-logistique}}
+
+La régression logistique est un modèle prédictif dont le but est de
+prédire/expliquer les valeurs prises par une variable cible qualitative.
+Dans notre cas, la variable cible y est de type binaire (yes/no) et
+désigne si le client à souscrit ou non un dépôt à terme. On parle donc
+de régression logistique binaire.
+
+Il est possible de pénaliser le modèle de régression logistique. En
+effet, il y a deux types de régression pénalisée:\\
+- la régression Ridge: pénalise la magnitude absolue des coefficients\\
+- la régression Lasso: pénalise le nombre de coefficient différents de
+0\\
+Ces paramètres sont utilisés pour ajuster les coefficients de la
+régression à l'aide de plusieurs paramètres comme alpha qui permet
+d'ajuster le modèle Ridge ou Lasso et lambda qui permet de contrôler la
+pénalité.
+
+Dans un premier temps, nous allons charger et préparer les données. Nous
+essaierons ensuite plusieurs modèles de régression logistique, notamment
+des modèles pénalisés. Enfin, nous comparrons les performances de nos
+modèles.
+
+\hypertarget{chargement-des-packages}{%
+\section{Chargement des packages}\label{chargement-des-packages}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(dplyr)}
+\KeywordTok{library}\NormalTok{(glmnet)}
+\KeywordTok{library}\NormalTok{(caTools)}
+\KeywordTok{library}\NormalTok{(csv)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{pruxe9paration-des-donnuxe9es}{%
+\section{Préparation des données}\label{pruxe9paration-des-donnuxe9es}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+\CommentTok{#Chargement des données}
+\CommentTok{#data<-read.csv2("C:/Users/Axelle/Desktop/M/03_SISE/05_MACHINE LEARNING/Projet/bank.csv")}
+\NormalTok{data<-}\KeywordTok{read.csv2}\NormalTok{(}\StringTok{"bank.csv"}\NormalTok{)}
+
+\CommentTok{#Recodage de la variable cible}
+\NormalTok{data}\OperatorTok{$}\NormalTok{y =}\StringTok{ }\KeywordTok{recode}\NormalTok{(data}\OperatorTok{$}\NormalTok{y, }\StringTok{"no"}\NormalTok{ =}\StringTok{ }\DecValTok{0}\NormalTok{, }\StringTok{"yes"}\NormalTok{ =}\StringTok{ }\DecValTok{1}\NormalTok{)}
+\KeywordTok{prop.table}\NormalTok{(}\KeywordTok{table}\NormalTok{(data}\OperatorTok{$}\NormalTok{y))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##       0       1 
+## 0.88476 0.11524
+\end{verbatim}
+
+Nous avons recodé la variable cible en variable binaire 0/1 ou 0 désigne
+la classe ``no'' et 1 désigne la classe ``yes''.\\
+88.47\% de nos observations sont de la classe 0. Le modèle par défaut
+consisterait donc à prédire systématiquement la classe majoritaire 0.
+Donc, avec la prédiction par défaut, le taux d'erreur serait de 11.52\%.
+
+\hypertarget{echantillonage}{%
+\section{Echantillonage}\label{echantillonage}}
+
+Nous séparons les données en un échantillon d'apprentissage et un
+échantillon de test puis nous séparons la variable cible et les
+variables explicatives dans des variables différentes.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Echantillonage des données}
+\NormalTok{ech =}\StringTok{ }\KeywordTok{sort}\NormalTok{(}\KeywordTok{sample}\NormalTok{(}\KeywordTok{nrow}\NormalTok{(data), }\KeywordTok{nrow}\NormalTok{(data)}\OperatorTok{*}\NormalTok{.}\DecValTok{7}\NormalTok{))}
+\NormalTok{train =}\StringTok{ }\NormalTok{data[ech, ]}
+\NormalTok{test =}\StringTok{ }\NormalTok{data[}\OperatorTok{-}\NormalTok{ech, ]}
+
+\CommentTok{#Definition variables explicatives/variable cible}
+\NormalTok{Xtrain =}\StringTok{ }\NormalTok{train[, }\DecValTok{-17}\NormalTok{]}
+\NormalTok{ytrain =}\StringTok{ }\NormalTok{train[, }\DecValTok{17}\NormalTok{]}
+\NormalTok{Xtest =}\StringTok{ }\NormalTok{test[, }\DecValTok{-17}\NormalTok{]}
+\NormalTok{ytest =}\StringTok{ }\NormalTok{test[, }\DecValTok{17}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{la-ruxe9gression-logistique}{%
+\section{La régression logistique}\label{la-ruxe9gression-logistique}}
+
+Nous essayons d'abord de prédire nos données avec un modèle de
+régression logistique sans pénalisation (avec lambda=0).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Modèle de régression logistique}
+\NormalTok{reg =}\StringTok{ }\KeywordTok{glmnet}\NormalTok{(}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtrain), ytrain, }\DataTypeTok{family=}\StringTok{"binomial"}\NormalTok{, }\DataTypeTok{lambda=}\DecValTok{0}\NormalTok{) }
+\CommentTok{#Prédiction sur les données test}
+\NormalTok{pred =}\StringTok{ }\KeywordTok{predict}\NormalTok{(reg, }\DataTypeTok{newx =} \KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{))}
+\CommentTok{#Matrice de confusion}
+\NormalTok{cm =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred, ytest); cm}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##     ytest
+## pred    0    1
+##    0 1170   98
+##    1   34   55
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Taux d'erreur}
+\NormalTok{err =}\StringTok{ }\NormalTok{(cm[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm); err}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.0972734
+\end{verbatim}
+
+Le taux d'erreur est de 9.73\% qui est donc meilleur que la prédiction
+par défaut.
+
+\hypertarget{la-ruxe9gression-ridge}{%
+\section{La régression Ridge}\label{la-ruxe9gression-ridge}}
+
+La régression ridge correspond à lambda\textgreater0 et alpha=0.\\
+Nous allons déterminer la valeur optimal de lambda par cross validation
+en 10 folds.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Optimisation du paramètre lambda}
+\NormalTok{cv.ridge =}\StringTok{ }\KeywordTok{cv.glmnet}\NormalTok{(}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtrain), ytrain, }\DataTypeTok{family=}\StringTok{"binomial"}\NormalTok{, }\DataTypeTok{type.measure=}\StringTok{"class"}\NormalTok{, }\DataTypeTok{nfolds=}\DecValTok{10}\NormalTok{, }\DataTypeTok{alpha=}\DecValTok{0}\NormalTok{, }\DataTypeTok{keep=}\OtherTok{TRUE}\NormalTok{)}
+\KeywordTok{plot}\NormalTok{(cv.ridge)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Regression_Logistique_Markdown_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+Le graphique met en relation les valeurs de log(λ) avec le taux d'erreur
+moyen en validation croisée.\\
+Le premier trait en pointillé représente le lambda qui minimise
+l'erreur. Il vaut -3.94.\\
+Le deuxième trait en pointillé représente la plus grande valeur de
+lambda pour laquelle l'erreur moyenne en validation croisée est
+inférieure à la borne haute de l'intervalle de confiance de l'erreur
+optimale. Il vaut -3.01.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lambda_min =}\StringTok{ }\NormalTok{cv.ridge}\OperatorTok{$}\NormalTok{lambda.min}
+\NormalTok{lambda_1se =}\StringTok{ }\NormalTok{cv.ridge}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se}
+\end{Highlighting}
+\end{Shaded}
+
+Nous allons essayer de faire les prédictions avec ces deux valeurs de
+lambda.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Prédiction}
+\NormalTok{pred_ridge =}\StringTok{ }\KeywordTok{predict}\NormalTok{(cv.ridge , }\DataTypeTok{newx =} \KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(lambda_min, lambda_1se), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\CommentTok{#Matrices de confusion}
+\NormalTok{cm_ridge1 =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_ridge[,}\DecValTok{1}\NormalTok{], ytest)}
+\NormalTok{cm_ridge2 =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_ridge[,}\DecValTok{2}\NormalTok{], ytest)}
+\CommentTok{#Taux d'erreur}
+\NormalTok{err_ridge1 =}\StringTok{ }\NormalTok{(cm_ridge1[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_ridge1[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_ridge1); err_ridge1}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.09801032
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{err_ridge2 =}\StringTok{ }\NormalTok{(cm_ridge2[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_ridge2[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_ridge2); err_ridge2}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 0.1024318
+\end{verbatim}
+
+Les deux modèles Ridge font mieux que la prédiction par défaut mais sont
+moins bien que le modele precedent (sans pénalisation).\\
+Si on compare les deux modèles de Ridge, le premier est un peu meilleur.
+Le modèle le plus pénalisé n'est donc pas le meilleur choix dans notre
+cas.
+
+\hypertarget{la-ruxe9gression-elasticnet}{%
+\section{La régression elasticnet}\label{la-ruxe9gression-elasticnet}}
+
+La régression ridge correspond à lambda\textgreater0 et
+alpha\textgreater0.\\
+Nous allons déterminer la valeur optimal de lambda et alpha.\\
+Nous commençons par cross valider notre modèle.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Modèles}
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\DecValTok{10}\NormalTok{) \{}
+  \KeywordTok{assign}\NormalTok{(}\KeywordTok{paste}\NormalTok{(}\StringTok{"fit"}\NormalTok{, i, }\DataTypeTok{sep=}\StringTok{""}\NormalTok{), }\KeywordTok{cv.glmnet}\NormalTok{(}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtrain), ytrain, }\DataTypeTok{type.measure=}\StringTok{"class"}\NormalTok{, }\DataTypeTok{alpha=}\NormalTok{i}\OperatorTok{/}\DecValTok{10}\NormalTok{,}\DataTypeTok{family=}\StringTok{"binomial"}\NormalTok{))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Prédiction avec les différents modèles
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Predictions}
+\NormalTok{pred_enet1 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit1, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(fit1}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se, fit1}\OperatorTok{$}\NormalTok{lambda.min), }\DataTypeTok{newx=}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\NormalTok{pred_enet2 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit2, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(fit2}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se, fit2}\OperatorTok{$}\NormalTok{lambda.min), }\DataTypeTok{newx=}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\NormalTok{pred_enet3 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit3, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(fit3}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se, fit3}\OperatorTok{$}\NormalTok{lambda.min), }\DataTypeTok{newx=}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\NormalTok{pred_enet4 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit4, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(fit4}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se, fit4}\OperatorTok{$}\NormalTok{lambda.min), }\DataTypeTok{newx=}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\NormalTok{pred_enet5 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit5, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(fit5}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se, fit5}\OperatorTok{$}\NormalTok{lambda.min), }\DataTypeTok{newx=}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\NormalTok{pred_enet6 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit6, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(fit6}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se, fit6}\OperatorTok{$}\NormalTok{lambda.min), }\DataTypeTok{newx=}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\NormalTok{pred_enet7 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit7, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(fit7}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se, fit7}\OperatorTok{$}\NormalTok{lambda.min), }\DataTypeTok{newx=}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\NormalTok{pred_enet8 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit8, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(fit8}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se, fit8}\OperatorTok{$}\NormalTok{lambda.min), }\DataTypeTok{newx=}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\NormalTok{pred_enet9 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit9, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(fit9}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se, fit9}\OperatorTok{$}\NormalTok{lambda.min), }\DataTypeTok{newx=}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\NormalTok{pred_enet10 =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit10, }\DataTypeTok{s=}\KeywordTok{c}\NormalTok{(fit10}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se, fit10}\OperatorTok{$}\NormalTok{lambda.min), }\DataTypeTok{newx=}\KeywordTok{model.matrix}\NormalTok{(}\OperatorTok{~}\NormalTok{., Xtest), }\DataTypeTok{type=}\StringTok{"class"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Calcul des matrices de confusion
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Matrices de confusion}
+\NormalTok{cm_enet1_1se =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet1[,}\DecValTok{1}\NormalTok{], ytest)}
+\NormalTok{cm_enet2_1se =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet2[,}\DecValTok{1}\NormalTok{], ytest)}
+\NormalTok{cm_enet3_1se =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet3[,}\DecValTok{1}\NormalTok{], ytest)}
+\NormalTok{cm_enet4_1se =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet4[,}\DecValTok{1}\NormalTok{], ytest)}
+\NormalTok{cm_enet5_1se =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet5[,}\DecValTok{1}\NormalTok{], ytest)}
+\NormalTok{cm_enet6_1se =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet6[,}\DecValTok{1}\NormalTok{], ytest)}
+\NormalTok{cm_enet7_1se =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet7[,}\DecValTok{1}\NormalTok{], ytest)}
+\NormalTok{cm_enet8_1se =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet8[,}\DecValTok{1}\NormalTok{], ytest)}
+\NormalTok{cm_enet9_1se =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet9[,}\DecValTok{1}\NormalTok{], ytest)}
+\NormalTok{cm_enet10_1se =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet10[,}\DecValTok{1}\NormalTok{], ytest)}
+
+\NormalTok{cm_enet1_min =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet1[,}\DecValTok{2}\NormalTok{], ytest)}
+\NormalTok{cm_enet2_min =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet2[,}\DecValTok{2}\NormalTok{], ytest)}
+\NormalTok{cm_enet3_min =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet3[,}\DecValTok{2}\NormalTok{], ytest)}
+\NormalTok{cm_enet4_min =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet4[,}\DecValTok{2}\NormalTok{], ytest)}
+\NormalTok{cm_enet5_min =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet5[,}\DecValTok{2}\NormalTok{], ytest)}
+\NormalTok{cm_enet6_min =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet6[,}\DecValTok{2}\NormalTok{], ytest)}
+\NormalTok{cm_enet7_min =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet7[,}\DecValTok{2}\NormalTok{], ytest)}
+\NormalTok{cm_enet8_min =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet8[,}\DecValTok{2}\NormalTok{], ytest)}
+\NormalTok{cm_enet9_min =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet9[,}\DecValTok{2}\NormalTok{], ytest)}
+\NormalTok{cm_enet10_min =}\StringTok{ }\KeywordTok{table}\NormalTok{(pred_enet10[,}\DecValTok{2}\NormalTok{], ytest)}
+\end{Highlighting}
+\end{Shaded}
+
+Calcul des taux d'erreur
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#Taux d'erreur}
+\NormalTok{err_enet1_1se =}\StringTok{ }\NormalTok{(cm_enet1_1se[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet1_1se[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet1_1se)}
+\NormalTok{err_enet2_1se =}\StringTok{ }\NormalTok{(cm_enet2_1se[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet2_1se[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet2_1se)}
+\NormalTok{err_enet3_1se =}\StringTok{ }\NormalTok{(cm_enet3_1se[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet3_1se[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet3_1se)}
+\NormalTok{err_enet4_1se =}\StringTok{ }\NormalTok{(cm_enet4_1se[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet4_1se[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet4_1se)}
+\NormalTok{err_enet5_1se =}\StringTok{ }\NormalTok{(cm_enet5_1se[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet5_1se[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet5_1se)}
+\NormalTok{err_enet6_1se =}\StringTok{ }\NormalTok{(cm_enet6_1se[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet6_1se[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet6_1se)}
+\NormalTok{err_enet7_1se =}\StringTok{ }\NormalTok{(cm_enet7_1se[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet7_1se[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet7_1se)}
+\NormalTok{err_enet8_1se =}\StringTok{ }\NormalTok{(cm_enet8_1se[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet8_1se[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet8_1se)}
+\NormalTok{err_enet9_1se =}\StringTok{ }\NormalTok{(cm_enet9_1se[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet9_1se[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet9_1se)}
+\NormalTok{err_enet10_1se =}\StringTok{ }\NormalTok{(cm_enet10_1se[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet10_1se[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet10_1se)}
+\NormalTok{err_enet_1se =}\StringTok{ }\KeywordTok{c}\NormalTok{(err_enet1_1se, err_enet2_1se, err_enet3_1se, err_enet4_1se, err_enet5_1se, err_enet6_1se, err_enet7_1se, err_enet8_1se, err_enet9_1se, err_enet10_1se)}
+
+\NormalTok{err_enet1_min =}\StringTok{ }\NormalTok{(cm_enet1_min[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet1_min[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet1_min)}
+\NormalTok{err_enet2_min =}\StringTok{ }\NormalTok{(cm_enet2_min[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet2_min[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet2_min)}
+\NormalTok{err_enet3_min =}\StringTok{ }\NormalTok{(cm_enet3_min[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet3_min[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet3_min)}
+\NormalTok{err_enet4_min =}\StringTok{ }\NormalTok{(cm_enet4_min[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet4_min[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet4_min)}
+\NormalTok{err_enet5_min =}\StringTok{ }\NormalTok{(cm_enet5_min[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet5_min[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet5_min)}
+\NormalTok{err_enet6_min =}\StringTok{ }\NormalTok{(cm_enet6_min[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet6_min[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet6_min)}
+\NormalTok{err_enet7_min =}\StringTok{ }\NormalTok{(cm_enet7_min[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet7_min[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet7_min)}
+\NormalTok{err_enet8_min =}\StringTok{ }\NormalTok{(cm_enet8_min[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet8_min[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet8_min)}
+\NormalTok{err_enet9_min =}\StringTok{ }\NormalTok{(cm_enet9_min[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet9_min[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet9_min)}
+\NormalTok{err_enet10_min =}\StringTok{ }\NormalTok{(cm_enet10_min[}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{] }\OperatorTok{+}\StringTok{ }\NormalTok{cm_enet10_min[}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{])}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(cm_enet10_min)}
+\NormalTok{err_enet_min =}\StringTok{ }\KeywordTok{c}\NormalTok{(err_enet1_min, err_enet2_min, err_enet3_min, err_enet4_min, err_enet5_min, err_enet6_min, err_enet7_min, err_enet8_min, err_enet9_min, err_enet10_min)}
+\end{Highlighting}
+\end{Shaded}
+
+Comparaion des taux d'erreur
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df_err_enet =}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(err_enet_1se,err_enet_min)}
+\NormalTok{df_err_enet}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    err_enet_1se err_enet_min
+## 1     0.1061164   0.09801032
+## 2     0.1009580   0.09579956
+## 3     0.1039057   0.09801032
+## 4     0.1016949   0.09653648
+## 5     0.1031688   0.09579956
+## 6     0.1009580   0.09727340
+## 7     0.1016949   0.09727340
+## 8     0.1002211   0.09506264
+## 9     0.1024318   0.09579956
+## 10    0.1024318   0.09653648
+\end{verbatim}
+
+Nous remarquons que les modèles les plus pénalisés (ceux avec
+lambda.1se) ont un taux d'erreur plus elevé et sont donc moins bon. Le
+meilleur de nos modèles a un taux d'erreur de 0.0950626.
+
+Récupérons à présents nos 3 meilleurs modèles. Nous allons afficher la
+courbe ROC afin de comparer ces modèles.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{all_pred =}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\KeywordTok{as.numeric}\NormalTok{(pred), }\KeywordTok{as.numeric}\NormalTok{(pred_ridge[,}\DecValTok{2}\NormalTok{]), }\KeywordTok{as.numeric}\NormalTok{(pred_enet8[,}\DecValTok{2}\NormalTok{]))}
+\KeywordTok{colnames}\NormalTok{(all_pred) =}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"reg_log"}\NormalTok{, }\StringTok{"reg_ridge"}\NormalTok{, }\StringTok{"reg_enet"}\NormalTok{)}
+\KeywordTok{colAUC}\NormalTok{(all_pred, ytest, }\DataTypeTok{plotROC =} \OtherTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##          reg_log reg_ridge  reg_enet
+## 0 vs. 1 0.665619 0.5971001 0.6526014
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{abline}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{, }\DataTypeTok{col =} \StringTok{"blue"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Regression_Logistique_Markdown_files/figure-latex/unnamed-chunk-13-1.pdf}
+
+Nous remarquons que nos trois modèles font mieux que l'aléatoire. Le
+meilleur des trois modèles est le modèle non pénalisé suivi du modèle
+elasticnet puis du modèle Ridge.\\
+Les aires sous la courbes sont compris entre 0.6 et 0.67. Il ne s'agit
+donc pas d'exellents modèles.
+
+\end{document}

@@ -1,6 +1,8 @@
 ---
 title: "Regression_Logistique"
-output: word_document
+output:
+  pdf_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -23,6 +25,7 @@ Dans un premier temps, nous allons charger et préparer les données. Nous essai
 library(dplyr)
 library(glmnet)
 library(caTools)
+library(csv)
 ```
 
 
@@ -30,7 +33,8 @@ library(caTools)
 ```{r}
 set.seed(123)
 #Chargement des données
-data<-read.csv2("C:/Users/Axelle/Desktop/M/03_SISE/05_MACHINE LEARNING/Projet/bank.csv")
+#data<-read.csv2("C:/Users/Axelle/Desktop/M/03_SISE/05_MACHINE LEARNING/Projet/bank.csv")
+data<-read.csv2("bank.csv")
 
 #Recodage de la variable cible
 data$y = recode(data$y, "no" = 0, "yes" = 1)

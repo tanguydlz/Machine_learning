@@ -1,4 +1,6 @@
 
+Notre problématique est de savoir si oui ou non une campagne publicitaire à fonctionné
+
 #chargement des donnees
 #setwd("C:/Users/ameli/Desktop/R/data_mining")
 
