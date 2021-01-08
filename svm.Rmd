@@ -34,7 +34,12 @@ ytest = test[, 17]
 ```
 
 # SVM
-Nous utilisons le package ’e1071’ pour l’implémentation des SVM. Nous demandons à la procédure svm() de construire un classifieur dont on ne centre pas les valeurs avec un noyau de type sigmoid.
+
+Les SVMs sont une famille d’algorithmes d‘apprentissage automatique qui permettent de résoudre des problèmes tant de classification que de régression ou de détection d’anomalie. Ils ont pour but de séparer les données en classes à l’aide d’une frontière aussi « simple » que possible, de telle façon que la distance entre les différents groupes de données et la frontière qui les sépare soit maximale. Cette distance est aussi appelée « marge » et les SVMs sont ainsi qualifiés de « séparateurs à vaste marge », les « vecteurs de support » étant les données les plus proches de la frontière.
+
+Nous utilisons le package ’e1071’ pour l’implémentation des SVM. Ce package nous permettra d'utiliser les SVM, de faire nos validations croisées et nos prédictions. On pourra y faire varier nos valeurs de Gamma et C. Cependant, on restera sur un noyau de type sigmoid au vu des données. 
+
+Nous demandons à la procédure svm() de construire un classifieur dont on ne centre pas les valeurs avec un noyau de type sigmoid.
 On applique cette fonction à nos données d'apprentissage
 ```{r}
 model <- svm(model.matrix(~., Xtrain), ytrain, scale=F, type= "C-classification",kernel='sigmoid')
@@ -60,6 +65,8 @@ Maintenant, nous allons essayer d'ajuster notre modèle en tunant pour le moment
 Pour rappel, l'hyperparamètre C est responsable de la taille de la marge du MVC. Cela signifie que les points situés à l'intérieur de cette marge ne sont classés dans aucune des deux catégories.  Plus la valeur de C est faible, plus la marge est importante
 
 L'hyperparamètre gamma doit être réglé pour mieux adapter l'hyperplan aux données.  Il est responsable du degré de linéarité de l'hyperplan, et pour cela, il n'est pas présent lors de l'utilisation de noyaux linéaires. Plus γ est petit, plus l'hyperplan aura l'air d'une ligne droite, tandis que si γ est trop grand, l'hyperplan sera plus courbé et pourrait trop bien délimiter les données, ce qui entraînerait un overfitting.
+
+On fera varier C de manière logarithmique (0.1,1,10,100) et de même pour Gamma (0.1, 1, 10)
 
 
 #Optimisation des hyperparamètres
