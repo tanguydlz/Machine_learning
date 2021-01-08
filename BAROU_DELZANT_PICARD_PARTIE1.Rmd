@@ -264,7 +264,8 @@ pred = prediction(kpca_score_test, ytest_set) #Erreur : 'predictions' contains N
 # plot(roc, add=TRUE)
 ```
 
-
+Nous ne pouvons donc pas comparer les performances du kernel PCA avec celles du one-class SVM.  
+Cependant, aux vus des résultats obtenus avec la prédiction par one-class SVM avec la courbe ROC très au dessus du classifieur aléatoire et une aire sous la courbe très proche de 1 (égale à `r oc_svm_auc@y.values[[1]]`), nous pouvons recommander la méthode du one-class SVM pour répondre à la problématique qui est de prédire si une tumeur est maligne ou bégnine.
 
 
 
