@@ -2,7 +2,9 @@
 title: "Projet Data_mining"
 author: "Axelle Barou & Amélie Picard & Tanguy Delzant"
 date: "06/01/2021"
-output: pdf_document
+output:
+  word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -18,7 +20,7 @@ Nous allons tout d'abord chercher le meilleur modèle de régression logistique,
 
 Nous avons choisi un jeu de données sur Kaggle : https://www.kaggle.com/volodymyrgavrysh/bank-marketing-campaigns-dataset
 
-Ce dernier contient 41188 observations et 21 variables.
+Ce dernier contient 4521 observations et 17 variables.
 
 Il s’agit d’un jeu de données sur les campagnes marketing des banques portugaises. Ces campagnes, qui se basaient sur des appels téléphoniques, permettaient d’offrir aux clients de déposer un dépôt à terme, c’est-à-dire de prêter de l’argent à une banque sur une durée fixe, avec un taux d’intérêt connu à l’avance ou variable.
 
@@ -37,6 +39,8 @@ library(caTools)
 #le package neutralnet permet de réaliser des reseau de neurones :
 library(neuralnet) 
 
+set.seed(123)
+
 #chargement des donnees
 #setwd("C:/Users/ameli/Desktop/R/data_mining")
 data<-read.csv2("bank.csv")
@@ -50,6 +54,34 @@ kable(head(data1),format = "latex")
 kable(head(data2),format = "latex")
 
 ```
+
+Nous séparons les données en un échantillon d'apprentissage et un échantillon de test puis nous séparons la variable cible et les variables explicatives dans des variables différentes.
+```{r}
+#Echantillonage des données
+ech = sort(sample(nrow(data), nrow(data)*.7))
+train = data[ech, ]
+test = data[-ech, ]
+
+#Definition variables explicatives/variable cible
+Xtrain = train[, -17]
+ytrain = train[, 17]
+Xtest = test[, -17]
+ytest = test[, 17]
+```
+
+# Protocole expérimental
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Le modèle de régression logistique
 
@@ -216,19 +248,28 @@ Les aires sous la courbes sont compris entre `r round(min(colAUC(all_pred, ytest
 
 Nous allons voir le protocole expérimentale, puis nous allons le décrire plus en détail le déroulement de l'analyse réalisé ainsi que les conclusions.
 
-## Protocole expérimental
-
-
-
 ## Transformation des données
 
 Avant de réaliser les réseaux de neurones, nous devons transformer les données. Pour les variables quantitatives, nous allons les normaliser pour qu'elle ai la même importance. Pour les variables qualitatives il faut les convertir en ordonné en leur donnant une valeur numeric de 1 à k ou k est le nombre de facteur. 
 Avant de paramètrer le réseau de neuronne, il faut normaliser les données, les variables explicatives, dans notre cas toutes les variables du jeu de données sauf "y" la variables cible.
 
-```{r}
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+#Echantillonage des données
+ech = sort(sample(nrow(data), nrow(data)*.7))
+train = data[ech, ]
+test = data[-ech, ]
+
+#Definition variables explicatives/variable cible
+Xtrain = train[, -17]
+ytrain = train[, 17]
+Xtest = test[, -17]
+ytest = test[, 17]
+
 #on récupère les données de base
-datann<-data
-dataquali<-data[,c(2,3,4,5,7,8,9,11,16)]
+trainRN<-train
+testRN<-test
+testquali<-test[,c(2,3,4,5,7,8,9,11,16)]
+trainquali<-train[,c(2,3,4,5,7,8,9,11,16)]
 
 #quali en quali numeric
 #fonction qui change pour une variable les noms des modalité par un nombre :
@@ -243,41 +284,35 @@ encoding<-function(var) {
     }
     return(as.numeric(var))
 }
-dataquali<-lapply(dataquali, encoding)
+trainquali<-lapply(trainquali, encoding)
+testquali<-lapply(testquali, encoding)
 
 #donnée avec toute les variables numérique :
-datann[,c(2,3,4,5,7,8,9,11,16)]<-dataquali
+trainRN[,c(2,3,4,5,7,8,9,11,16)]<-trainquali
+testRN[,c(2,3,4,5,7,8,9,11,16)]<-testquali
 
 #normalisation des variables 
-scaleddata<-scale(datann[-17])
-datann<-data.frame(scaleddata,datann[17])
+trainRN<-data.frame(scale(trainRN[-17]),trainRN[17])
+testRN<-data.frame(scale(testRN[-17]),testRN[17])
 ```
 
-De plus, pour la vérification et la validation du meilleur reseau de neurone, nous découpons nos données en trois échantillons. Nous réalisons un premier découpage dans les données pour obtenir un échantillon d'apprentissage qui est constitué de 80% de la base et un échantillon test qui est constitué de 20% de la base. Puis nous re-découpons l'échantillon d'apprentissage en deux, pour récupérer un échantillon de validation qui est constitué de 30% de l'échantillon d'apprentissage. 
+De plus, pour la vérification et la validation du meilleur reseau de neurone, nous découpons nos données en trois échantillons. A partir du premier découpage dans les données pour obtenir un échantillon d'apprentissage qui est constitué de 80% de la base et un échantillon test de 20% de la base. Nous re-découpons l'échantillon d'apprentissage en deux, pour récupérer un échantillon de validation qui est constitué de 30% de l'échantillon d'apprentissage, et donc nous utiliserons un échantillon d'apprentissage un peu plus petit uniquement pour la partie réseau de neurone. 
 
 ```{r}
-#Echantillonage des données
-ech = sort(sample(nrow(datann), nrow(datann)*.8))
-
-train = datann[ech, ]
-test = datann[-ech, ]
-
-#Definition variables explicatives/variable cible de test
-Xtest = test[, -17]
-ytest = test[, 17]
-
 #Découpage de l'échantillon d'apprentissage en ech de validation : 
 #Echantillonage des données
-ech2 = sort(sample(nrow(train), nrow(train)*.7))
+ech2 = sort(sample(nrow(trainRN), nrow(trainRN)*.7))
 
-valid = train[-ech2, ]
-train = train[ech2, ]
+valid = trainRN[-ech2, ]
+trainRN = trainRN[ech2, ]
 
 #Definition variables explicatives/variable cible 
-Xtrain = train[, -17]
-ytrain = train[, 17]
+XtrainRN = trainRN[, -17]
+ytrainRN = trainRN[, 17]
 Xvalid = valid[, -17]
 yvalid = valid[, 17]
+XtestRN = testRN[, -17]
+ytestRN = testRN[, 17]
 
 ```
 
@@ -301,9 +336,9 @@ Dans le cas d'une variable y catégorielle binaire, nous choisissons comme fonct
 Premier modéle : 
 
 ```{r}
-nn=neuralnet(ytrain~., data = Xtrain, hidden=10, err.fct="ce",linear.output = FALSE)
-attributes(nn)
-nn$result.matrix
+nn<-neuralnet(ytrainRN~., data = XtrainRN, hidden=10, err.fct="ce",linear.output = FALSE)
+#attributes(nn)
+#nn$result.matrix
 
 ```
 
@@ -312,7 +347,6 @@ Validation du modèle :
 ```{r}
 prob <- predict(nn,valid)
 pred <- ifelse(prob>0.5, 1, 0)
-pred
 
 ```
 
@@ -329,7 +363,7 @@ Le taux d'erreur de ce premier modéle est de `r round(tx*100,2)`%.
 
 Deuxième modèle : 
 ```{r}
-nn2=neuralnet(ytrain~., data = Xtrain, hidden=10, err.fct="ce",linear.output = FALSE,likelihood = TRUE)
+nn2=neuralnet(ytrainRN~., data = XtrainRN, hidden=10, err.fct="ce",linear.output = FALSE,likelihood = TRUE)
 
 prob2 <- predict(nn2,valid)
 pred2 <- ifelse(prob2>0.5, 1, 0)
@@ -343,7 +377,7 @@ Le modéle deux est moins performant avec le "likelihood" (taux d'erreur = `r ro
 
 Troixième modèle : augmentation du nombre de couche de la couche caché de 10 à 17 (nombre de variable d'entrée)
 ```{r}
-nn3=neuralnet(ytrain~., data = Xtrain, hidden=17, err.fct="ce",linear.output = FALSE)
+nn3=neuralnet(ytrainRN~., data = XtrainRN, hidden=17, err.fct="ce",linear.output = FALSE)
 
 prob3 <- predict(nn3,valid)
 pred3 <- ifelse(prob3>0.5, 1, 0)
@@ -358,7 +392,7 @@ Le taux d'erreur est plus faible que pour une couche comprenant 10 neurones cach
 
 Quatrième modèle : augmentation du nombre de couche de la couche caché de 17 à 34 (deux fois le nombre de variable d'entrée)
 ```{r}
-nn4=neuralnet(ytrain~., data = Xtrain, hidden=34, err.fct="ce",linear.output = FALSE)
+nn4=neuralnet(ytrainRN~., data = XtrainRN, hidden=34, err.fct="ce",linear.output = FALSE)
 
 prob4 <- predict(nn4,valid)
 pred4 <- ifelse(prob4>0.5, 1, 0)
@@ -375,7 +409,7 @@ On garde la prédiction n°3 pour le nombre de neurones de la couche caché. Et 
 
 Cinquième modèle : On utilise une couche caché composé de 34 neurones et on passe l'argument "likelihood" à vrai.
 ```{r}
-nn5<-neuralnet(ytrain~., data = Xtrain, hidden=34, err.fct="ce",linear.output = FALSE, likelihood = TRUE)
+nn5<-neuralnet(ytrainRN~., data = XtrainRN, hidden=34, err.fct="ce",linear.output = FALSE, likelihood = TRUE)
 
 prob5 <- predict(nn5,valid)
 pred5 <- ifelse(prob5>0.5, 1, 0)
@@ -392,7 +426,7 @@ Nous testons un dernier modéle.
 
 Sixième modèle : Nous augumentons encore une fois le nombre de neurones de la couche cachée (3 fois le nombre de variable d'entrée)
 ```{r}
-nn6<-neuralnet(ytrain~., data = Xtrain, hidden=51, err.fct="ce",linear.output = FALSE, likelihood = TRUE)
+nn6<-neuralnet(ytrainRN~., data = XtrainRN, hidden=51, err.fct="ce",linear.output = FALSE, likelihood = TRUE)
 
 prob6 <- predict(nn6,valid)
 pred6 <- ifelse(prob6>0.5, 1, 0)
@@ -415,6 +449,7 @@ abline(0,1, col = "blue")
 
 ```
 
+L'air sous la courbe des Courbe ROC sous toutes supérieure à la courbe aléatoire, ce qui signifie que tous nos modèles sont meilleurs que l'aléatoire.
 A l'aide de la Courbe ROC ainsi que du taux d'erreur, nous considérons le meilleur réseau de neurone étant le quatrième modèle construit. C'est a dire que nous utilisons 17 neuronnes caché et que nous plaçons à vrai l'argument "likelihood". C'est avec ce modèle que nous allons vérifier la bonne prédiction des valeurs test.
 
 ## Prédiction de la variable cible y
@@ -429,34 +464,169 @@ plot(nn4)
 Voici la distribution de la variable y prédite par le réseau de neurone :
 
 ```{r}
-prob <- predict(nn4,test)
+prob <- predict(nn4,testRN)
 predRN <- ifelse(prob>0.5, 1, 0)
 
 ```
 
 Voici la matrice de confusion entre les valeurs prédite et les valeurs test : 
 ```{r}
-mRN<-table(predRN,ytest)
+mRN<-table(predRN,ytestRN)
 kable(mRN)
 ```
 
-#Comparaison des 3 modèles séléctionnée
+# SVM
+
+Nous utilisons le package ’e1071’ pour l’implémentation des SVM. Nous demandons à la procédure svm() de construire un classifieur dont on ne centre pas les valeurs avec un noyau de type sigmoid.
+On applique cette fonction à nos données d'apprentissage
+```{r}
+model <- svm(model.matrix(~., Xtrain), ytrain, scale=F, type= "C-classification",kernel='sigmoid')
+summary(model)
+```
+
+On obtient 692 points supports ce qui est par rapport à la taille d'échantillon (3164 observations) n'est pas forcément trop élevé, donc la modélisation est efficace
+
+
+```{r}
+#Prédiction sur les données test
+pred = predict(model, newdata = model.matrix(~., Xtest))
+#Matrice de confusion
+cm = table(pred, ytest); cm
+#Taux d'erreur
+err = (cm[1,2] + cm[2,1])/sum(cm); err
+```
+Le taux d'erreur est de `r round(err*100,2)`% qui est donc moins bonne que la prédiction par défaut. (11.52%)
+
+Ce model n'ayant pas été tuné, il n'est que la version simple de ce que nous pouvons avoir.
+Maintenant, nous allons essayer d'ajuster notre modèle en tunant pour le moment deux hyperparamètres : C et Gamma.
+
+Pour rappel, l'hyperparamètre C est responsable de la taille de la marge du MVC. Cela signifie que les points situés à l'intérieur de cette marge ne sont classés dans aucune des deux catégories.  Plus la valeur de C est faible, plus la marge est importante
+
+L'hyperparamètre gamma doit être réglé pour mieux adapter l'hyperplan aux données.  Il est responsable du degré de linéarité de l'hyperplan, et pour cela, il n'est pas présent lors de l'utilisation de noyaux linéaires. Plus γ est petit, plus l'hyperplan aura l'air d'une ligne droite, tandis que si γ est trop grand, l'hyperplan sera plus courbé et pourrait trop bien délimiter les données, ce qui entraînerait un overfitting.
+
+
+## Optimisation des hyperparamètres
+```{r}
+#Optimisation de Gamma et C
+tuned = tune.svm(x=model.matrix(~., Xtrain),
+                 y=as.factor(ytrain), 
+                 scale=F, type = "C-classification", kernel='sigmoid',
+                 cost = 10^(-1:2), 
+                 gamma = c(0.1, 1, 10),
+                 tunecontrol=tune.control(cross=10))
+tuned$performances
+```
+
+Le tableau met en évidence les différentes valeurs de gamma et C testées avec le taux d'erreur moyen pour 10 validations.
+On constate donc que 3 modèles sortent du lot avec des taux d'erreur presque similaire au alentour de 12.8% :
+gamma : 0.1 & cost : 0.1
+gamma : 1.0 & cost : 0.1
+gamma : 10.0 & cost : 0.1
+
+```{r}
+plot(tuned)
+```
+
+Nous allons donc faire nos prédictions avec deux modèles, étant donné que nous avons le même taux d'erreur pour deux modèles, nous prendrons donc celui recommendé par l'algorithme.
+
+
+```{r}
+svmfit = tuned$best.model
+#Prédiction sur les données test
+pred2 = predict(svmfit, newdata = model.matrix(~., Xtest))
+#Matrice de confusion
+cm = table(pred2, ytest); cm
+#Taux d'erreur
+err = (cm[1,2] + cm[2,1])/sum(cm); err
+```
+
+```{r}
+model2=svm(model.matrix(~., Xtrain), ytrain, scale=F,cost=0.1, gamma=0.1, type= "C-classification",kernel='sigmoid')
+#Prédiction sur les données test
+pred3 = predict(model2, newdata = model.matrix(~., Xtest))
+#Matrice de confusion
+cm = table(pred3, ytest); cm
+#Taux d'erreur
+err = (cm[1,2] + cm[2,1])/sum(cm); err
+```
+On constate donc que nous avons le même taux d'erreur. Cependant, nous avons une moins bonne prédiction que celle par défaut (13.19% contre 11.52%)
+
+Cependant, nous avons essayé que peu de valeur pour nos hyperparamètres et avons obtenu de bons résultats, on va donc élargir notre champ de valeur possible pour C et Gamma, pour essayer d'obtenir de meilleur résultat tout en évitant de l'overfitting.
+
+## Optimisation des hyperparamètres
+```{r}
+#Optimisation de Gamma et C
+tuned2 = tune.svm(x=model.matrix(~., Xtrain),
+                 y=as.factor(ytrain), 
+                 scale=F, type = "C-classification", kernel='sigmoid',
+                 cost = 10^(-1:3), 
+                 gamma = 10^(-5:-1),
+                 tunecontrol=tune.control(cross=10))
+tuned2$performances
+```
+
+On a augmenté le champ de valeur possible pour C et diminué celui de gamma, car c'est ce qui correspond le mieux pour avoir le meilleur modèle possible. Au vu des différents taux d'erreur, nous n'avons pas de meilleurs résultats comparé à la précédente cross validation. On pourrait donc supposer que notre meilleur modèle pour ce jeu de données seraient avec C = 0.1 et gamma = 0.1
+
+
+Nous allons maintenant afficher la courbe ROC de nos deux modèles à comparer
+
+```{r}
+pred=as.numeric(pred)
+predSVM=recode(pred, '1'=0, '2'=1)
+pred2=as.numeric(pred2)
+pred2=recode(pred2, '1'=0, '2'=1)
+```
+
+```{r}
+all_pred = data.frame(predSVM, pred2)
+colnames(all_pred) = c("svm_W/O_cv", "svm_w/_cv")
+colAUC(all_pred, ytest, plotROC = TRUE)
+abline(0,1, col = "blue")
+```
+On remarque que parmi nos 2 modèles, un fait mieux que celui aléatoire et l'autre le surpasse très légèrement
+Les aires sous la courbes sont compris entre `r round(min(colAUC(all_pred, ytest,)),2)` et `r round(max(colAUC(all_pred, ytest,)),2)`.
+Ces deux modèles ne sont donc pas performant.
+
+# Comparaison des 3 modèles séléctionnée
 
 Nous allons maintenant comparer les trois modèles séléctionné pour chaque méthodes. Puis nous choisirons le plus efficasse de tous.
 
 ```{r}
+#Matrice de confusion
+cm = table(predLog, ytest)
+#Taux d'erreur
+errLog = (cm[1,2] + cm[2,1])/sum(cm)
+
 #tx d'erreur reseau de neurone:
 txRN<-(mRN[1,2]+mRN[2,1])/length(ytest)
+#SVM :
+#Matrice de confusion
+cm = table(predSVM, ytest)
+#Taux d'erreur
+errSVM = (cm[1,2] + cm[2,1])/sum(cm)
+
 ```
-Le taux d'erreur du modèle de la regression logistique est de `r round(txLog*100,2)`%, celui du réseau de neurones est `r round(txRN*100,2)`% et enfin celui du SVM est 
+Le taux d'erreur du modèle de la regression logistique est de `r round(errLog*100,2)`%, celui du réseau de neurones est `r round(txRN*100,2)`% et enfin celui du SVM est `r round(errSVM*100,2)`%
 
 courbe ROC représentant : 
 ```{r}
-all_pred<-data.frame(predLog, predRN)
-colnames(all_pred)=c("Régression logistique","Reseau de neurones")
+all_pred<-data.frame(as.numeric(predLog), as.numeric(predRN), as.numeric(predSVM))
+colnames(all_pred)=c("Régression logistique","Reseau de neurones","SVM")
 colAUC(all_pred, ytest, plotROC = TRUE)
 abline(0,1, col = "blue")
 
 ```
 
-L'air sous la courbe représentant le reseau de neurones est supérieur à celle de la courbe représentant l'alétoire.
+
+
+# Conclusion
+
+Pour conclure, grâce à ce projet nous avons pu apprendre à paramètrer des modèles de machine learning sous R, ainsi que créer des rapports sous Rmarkdown. 
+
+Néanmoins nous avons rencontré quelques difficulté durant ce projet. En effet le travail à distance ne nous a pas permis de travailler ensemble mais d'échanger par message ou visio. De plus lors du paramétrage des réseaux de neurones, nous nous sommes rendu compte que la library "neutralnet" ne laisse pas la possibilité de changer beaucoup de paramètres car la variable cible est catégorielle et bianaire.
+
+Pour aller plus loin, nous pourons chercher une autre library pour les réseaux de neurones, pour obtenir un meilleur modèle.
+
+
+
+
